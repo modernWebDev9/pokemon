@@ -394,7 +394,7 @@ select.form-input option {
   }
 }
 
-/* Search Dropdown */
+/* Search Dropdown - Fixed height with scroll */
 .search-dropdown {
   position: absolute;
   top: 100%;
@@ -403,14 +403,32 @@ select.form-input option {
   background: var(--bg-secondary, #1a1a1a);
   border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
   border-radius: 20px;
-  max-height: 280px;
-  overflow-y: auto;
   z-index: 100;
   margin-top: 8px;
   box-shadow: var(--shadow-lg, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
+  overflow: hidden;
+}
+
+.search-dropdown-scroll {
+  max-height: 400px;
+  overflow-y: auto;
   
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--bg-tertiary, #2a2a2a);
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 245, 255, 0.3);
+    border-radius: 10px;
+    
+    &:hover {
+      background: rgba(0, 245, 255, 0.5);
+    }
   }
 }
 
@@ -425,6 +443,10 @@ select.form-input option {
   
   &:hover {
     background: rgba(0, 245, 255, 0.08);
+  }
+  
+  &:last-child {
+    border-bottom: none;
   }
   
   img {
@@ -465,11 +487,9 @@ select.form-input option {
   font-size: 0.85rem;
 }
 
+/* Remove search-hint since it's no longer needed */
 .search-hint {
-  font-size: 0.7rem;
-  color: var(--text-tertiary, #6b6b6b);
-  margin-top: 6px;
-  margin-left: 16px;
+  display: none;
 }
 
 /* Submit Button */
@@ -1246,5 +1266,167 @@ select.form-input option {
   
   .tier-badge {
     background: linear-gradient(135deg, #f59e0b, #d97706);
+  }
+}
+
+/* ============================================
+   Delete Confirmation Modal
+   ============================================ */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 28px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+  animation: slideInUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.delete-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  
+  .delete-icon {
+    font-size: 2rem;
+  }
+  
+  h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ef4444;
+  }
+}
+
+.delete-modal-content {
+  padding: 24px;
+  text-align: center;
+  
+  p {
+    margin: 0 0 8px 0;
+    color: var(--text-primary, white);
+    font-size: 1rem;
+    
+    strong {
+      color: #00f5ff;
+    }
+  }
+  
+  .delete-warning {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: 0;
+  }
+}
+
+.delete-modal-footer {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  background: var(--bg-secondary, #0f0f0f);
+}
+
+.cancel-delete-btn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #a0a0a0);
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+}
+
+.confirm-delete-btn {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+}
+
+/* Light Theme Delete Modal */
+[data-theme="light"] {
+  .delete-modal {
+    background: #ffffff;
+  }
+  
+  .delete-modal-header {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03));
+  }
+  
+  .delete-modal-content p {
+    color: #1a1a1a;
+  }
+  
+  .delete-modal-footer {
+    background: #f8f9fa;
+  }
+  
+  .cancel-delete-btn {
+    border-color: #d0d0d0;
+    color: #666;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

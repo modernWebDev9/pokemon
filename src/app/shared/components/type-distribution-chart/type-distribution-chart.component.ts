@@ -1,7 +1,12 @@
-// src/app/shared/components/type-distribution-chart/type-distribution-chart.component.ts
-import { Component, input, ViewChild, ElementRef, AfterViewInit, OnDestroy, ChangeDetectionStrategy, effect, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import Chart from 'chart.js/auto';
+/**
+ * Type Distribution Chart Component - Doughnut chart for team type distribution
+ * Displays Pokémon type distribution within a team using Chart.js
+ */
+import { Component, input, ElementRef, ViewChild, AfterViewInit, OnDestroy, PLATFORM_ID, inject, effect } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Chart, ChartConfiguration, ChartData, ChartOptions, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 export interface TypeData {
   type: string;
@@ -9,174 +14,263 @@ export interface TypeData {
   color: string;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  normal: '#A8A878',
-  fire: '#F08030',
-  water: '#6890F0',
-  electric: '#F8D030',
-  grass: '#78C850',
-  ice: '#98D8D8',
-  fighting: '#C03028',
-  poison: '#A040A0',
-  ground: '#E0C068',
-  flying: '#A890F0',
-  psychic: '#F85888',
-  bug: '#A8B820',
-  rock: '#B8A038',
-  ghost: '#705898',
-  dragon: '#7038F8',
-  dark: '#705848',
-  steel: '#B8B8D0',
-  fairy: '#EE99AC'
-};
-
 @Component({
   selector: 'app-type-distribution-chart',
   standalone: true,
   imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="chart-container">
-      <canvas #pieCanvas></canvas>
-      <div class="chart-placeholder" *ngIf="types().length === 0">
-        <span>🎯 No Pokémon selected</span>
-        <p>Add Pokémon to see type distribution</p>
+    <div class="chart-wrapper">
+      <canvas #chartCanvas></canvas>
+      <div class="chart-legend" *ngIf="types().length > 0">
+        <div class="legend-items">
+          @for (item of types(); track item.type) {
+            <div class="legend-item">
+              <span class="legend-color" [style.backgroundColor]="item.color"></span>
+              <span class="legend-label">{{ item.type }}</span>
+              <span class="legend-count">({{ item.count }})</span>
+            </div>
+          }
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    .chart-container {
+    .chart-wrapper {
       position: relative;
-      height: 350px;
       width: 100%;
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin: 0 auto;
+      background: var(--bg-secondary, #0f0f0f);
+      border-radius: 20px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .chart-wrapper:hover {
+      transform: translateY(-2px);
+      background: var(--bg-tertiary, #252525);
+    }
+    
+    canvas {
+      max-height: 250px;
+      width: 100% !important;
+    }
+    
+    .chart-legend {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+    }
+    
+    .legend-items {
       display: flex;
-      align-items: center;
+      flex-wrap: wrap;
       justify-content: center;
+      gap: 20px;
     }
-    .chart-placeholder {
-      text-align: center;
-      color: #999;
+    
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--bg-secondary, #0f0f0f);
+      border-radius: 30px;
+      transition: all 0.2s;
     }
-    .chart-placeholder span {
-      font-size: 48px;
-      display: block;
-      margin-bottom: 8px;
+    
+    .legend-item:hover {
+      transform: translateY(-2px);
+      background: rgba(0, 245, 255, 0.05);
     }
-    .chart-placeholder p {
-      margin: 0;
-      font-size: 14px;
+    
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .legend-label {
+      color: var(--text-primary, white);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: capitalize;
+    }
+    
+    .legend-count {
+      color: var(--text-secondary, #a0a0a0);
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    
+    /* Light Theme */
+    [data-theme="light"] .chart-wrapper {
+      background: #f8f9fa;
+    }
+    
+    [data-theme="light"] .chart-wrapper:hover {
+      background: #f0f0f0;
+    }
+    
+    [data-theme="light"] .legend-item {
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    [data-theme="light"] .legend-item:hover {
+      background: #f0f0f0;
+    }
+    
+    [data-theme="light"] .legend-label {
+      color: #1a1a1a;
+    }
+    
+    [data-theme="light"] .legend-count {
+      color: #666;
+    }
+    
+    [data-theme="light"] .chart-legend {
+      border-top-color: #e0e0e0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .chart-wrapper {
+        padding: 16px;
+      }
+      
+      .legend-items {
+        gap: 12px;
+      }
+      
+      .legend-item {
+        padding: 3px 6px;
+        gap: 6px;
+      }
+      
+      .legend-label, .legend-count {
+        font-size: 0.65rem;
+      }
+      
+      canvas {
+        max-height: 200px;
+      }
     }
   `]
 })
 export class TypeDistributionChartComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('pieCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  private platformId = inject(PLATFORM_ID);
+  private chartInstance: Chart | null = null;
+  
+  @ViewChild('chartCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
   
   types = input<TypeData[]>([]);
   
-  private chart: Chart | null = null;
-  private isViewInitialized = false;
+  // Chart data
+  private chartData: ChartData<'doughnut'> = {
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: [],
+      borderWidth: 0,
+      hoverOffset: 10
+    }]
+  };
   
-  private updateEffect = effect(() => {
-    const data = this.types();
-    if (this.isViewInitialized) {
-      setTimeout(() => {
-        if (data && data.length > 0) {
-          this.updateChart(data);
-        } else {
-          this.destroyChart();
-        }
-      });
-    }
-  });
-  
-  ngAfterViewInit(): void {
-    this.isViewInitialized = true;
-    setTimeout(() => {
-      const data = this.types();
-      if (data && data.length > 0) {
-        this.initChart(data);
-      }
-    }, 100);
-  }
-  
-  private initChart(data: TypeData[]): void {
-    this.destroyChart();
-    
-    if (!this.canvasRef || !this.canvasRef.nativeElement) return;
-    
-    const ctx = this.canvasRef.nativeElement.getContext('2d');
-    if (!ctx) return;
-    
-    this.chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: data.map(d => d.type),
-        datasets: [{
-          data: data.map(d => d.count),
-          backgroundColor: data.map(d => d.color),
-          borderWidth: 2,
-          borderColor: '#fff',
-          hoverOffset: 15,
-        }]
+  // Chart options
+  private chartOptions: ChartOptions<'doughnut'> = {
+    responsive: true,
+    maintainAspectRatio: true,
+    cutout: '60%',
+    plugins: {
+      legend: {
+        display: false
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '60%',
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              font: { size: 11 },
-              usePointStyle: true,
-              pointStyle: 'circle',
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const label = context.label || '';
-                const value = context.raw as number;
-                const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
-                const percentage = ((value / total) * 100).toFixed(1);
-                return `${label}: ${value} (${percentage}%)`;
-              }
-            }
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || '';
+            const value = context.raw as number;
+            const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
+            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+            return `${label}: ${value} (${percentage}%)`;
           }
         },
-        animation: {
-          duration: 1000,
-          easing: 'easeOutBounce',
-        }
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#fff',
+        bodyColor: '#ccc',
+        borderColor: '#00f5ff',
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8
+      }
+    },
+    layout: {
+      padding: 10
+    }
+  };
+  
+  constructor() {
+    // Effect to update chart when types change
+    effect(() => {
+      const types = this.types();
+      if (this.chartInstance && types.length > 0) {
+        this.updateChart(types);
+      } else if (this.chartInstance && types.length === 0) {
+        this.clearChart();
       }
     });
   }
   
-  private updateChart(data: TypeData[]): void {
-    if (!this.chart) {
-      this.initChart(data);
-      return;
-    }
-    
-    this.chart.data.labels = data.map(d => d.type);
-    this.chart.data.datasets[0].data = data.map(d => d.count);
-    this.chart.data.datasets[0].backgroundColor = data.map(d => d.color);
-    this.chart.update();
-  }
-  
-  private destroyChart(): void {
-    if (this.chart) {
-      this.chart.destroy();
-      this.chart = null;
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId) && this.canvasRef) {
+      this.createChart();
     }
   }
   
   ngOnDestroy(): void {
-    this.destroyChart();
-    this.isViewInitialized = false;
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+      this.chartInstance = null;
+    }
+  }
+  
+  private createChart(): void {
+    const ctx = this.canvasRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+    
+    this.chartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: this.chartData,
+      options: this.chartOptions
+    });
+    
+    const types = this.types();
+    if (types.length > 0) {
+      this.updateChart(types);
+    }
+  }
+  
+  private updateChart(types: TypeData[]): void {
+    if (!this.chartInstance) return;
+    
+    const sortedTypes = [...types].sort((a, b) => b.count - a.count);
+    
+    this.chartInstance.data.labels = sortedTypes.map(t => t.type);
+    this.chartInstance.data.datasets[0].data = sortedTypes.map(t => t.count);
+    this.chartInstance.data.datasets[0].backgroundColor = sortedTypes.map(t => t.color);
+    
+    this.chartInstance.update();
+  }
+  
+  private clearChart(): void {
+    if (!this.chartInstance) return;
+    
+    this.chartInstance.data.labels = [];
+    this.chartInstance.data.datasets[0].data = [];
+    this.chartInstance.data.datasets[0].backgroundColor = [];
+    this.chartInstance.update();
   }
 }
