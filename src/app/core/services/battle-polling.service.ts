@@ -30,17 +30,24 @@ export class BattlePollingService {
   private lastTimestamp = new Date(0);
   private newLogsSubject = new Subject<BattleLogEntry[]>();
   private destroy$ = new Subject<void>();
+  private isPollingStarted = false;
   
   public newLogs$ = this.newLogsSubject.asObservable();
   
   /**
    * Start polling for new battle logs every 5 seconds
    * Uses RxJS interval + switchMap pattern
-   * 
-   * @returns Observable of new battle log entries
+   * Updates lastTimestamp and emits new logs through newLogsSubject
    */
-  startPolling(): Observable<BattleLogEntry[]> {
-    return interval(5000).pipe(
+  private startPollingInternal(): void {
+    // Prevent multiple polling intervals
+    if (this.isPollingStarted) {
+      return;
+    }
+    
+    this.isPollingStarted = true;
+    
+    interval(5000).pipe(
       switchMap(() => this.fetchAllLogs()),
       map(logs => logs.filter(log => new Date(log.timestamp) > this.lastTimestamp)),
       tap(logs => {
@@ -51,7 +58,9 @@ export class BattlePollingService {
         }
       }),
       takeUntil(this.destroy$)
-    );
+    ).subscribe({
+      error: (error) => console.error('Polling error:', error)
+    });
   }
   
   /**
@@ -82,6 +91,7 @@ export class BattlePollingService {
   stopPolling(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.isPollingStarted = false;
   }
   
   /**
@@ -92,13 +102,28 @@ export class BattlePollingService {
   }
   
   /**
+   * Set last timestamp to a specific value
+   * Useful for preventing duplicate logs after initial load
+   * 
+   * @param timestamp - Timestamp to set
+   */
+  setLastTimestamp(timestamp: Date): void {
+    this.lastTimestamp = timestamp;
+  }
+  
+  /**
    * Subscribe to battle logs with automatic cleanup
+   * Starts polling internally and returns subscription to newLogs$
    * 
    * @param onNewLogs - Callback for new logs
    * @returns Subscription (component should manage)
    */
   subscribeToBattleLogs(onNewLogs: (logs: BattleLogEntry[]) => void) {
-    return this.startPolling().subscribe({
+    // Start polling if not already started
+    this.startPollingInternal();
+    
+    // Subscribe to newLogs$ subject
+    return this.newLogs$.subscribe({
       next: onNewLogs,
       error: (error) => console.error('Battle log polling error:', error)
     });

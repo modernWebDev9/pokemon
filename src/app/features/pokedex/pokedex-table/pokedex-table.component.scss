@@ -176,6 +176,22 @@
         transform: scale(1.2);
       }
     }
+    
+    &::-moz-range-track {
+      background: rgba(255, 255, 255, 0.2);
+      height: 4px;
+      border-radius: 4px;
+    }
+    
+    &::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: #00f5ff;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 6px #00f5ff;
+      border: none;
+    }
   }
   
   .range-label {
@@ -484,6 +500,24 @@
   .range-value {
     background: rgba(102, 126, 234, 0.1);
     color: #667eea;
+  }
+  
+  .range-input {
+    background: rgba(0, 0, 0, 0.1);
+    
+    &::-webkit-slider-thumb {
+      background: #4f46e5;
+      box-shadow: 0 0 6px #4f46e5;
+    }
+    
+    &::-moz-range-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    
+    &::-moz-range-thumb {
+      background: #4f46e5;
+      box-shadow: 0 0 6px #4f46e5;
+    }
   }
   
   .pokedex-table thead {

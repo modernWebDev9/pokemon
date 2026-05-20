@@ -201,6 +201,13 @@ export class BattleLogComponent implements OnInit, OnDestroy {
         );
         this.battleLogs.set(sortedLogs);
         this.loading.set(false);
+        
+        // Update lastTimestamp to prevent duplicate logs on first poll
+        if (sortedLogs.length > 0) {
+          const maxTimestamp = Math.max(...sortedLogs.map(l => new Date(l.timestamp).getTime()));
+          this.battlePolling.setLastTimestamp(new Date(maxTimestamp));
+          console.log('Set last timestamp to:', new Date(maxTimestamp));
+        }
       },
       error: (error: Error) => {
         console.error('Failed to load battle logs:', error);

@@ -47,6 +47,12 @@
         </div>
       </div>
       
+      <!-- Stats Radar Chart -->
+      <div class="chart-section">
+        <h4>Stats Radar Chart</h4>
+        <app-stats-chart [pokemon]="pokemon()" />
+      </div>
+      
       <div class="stats-section">
         <h4>Base Stats</h4>
         <div class="stat-bar" *ngFor="let stat of getStatList()">
@@ -60,12 +66,6 @@
           </div>
           <div class="stat-value">{{ getStatValue(p.stats, stat.key) }}</div>
         </div>
-      </div>
-      
-      <!-- Stats Radar Chart -->
-      <div class="chart-section">
-        <h4>Stats Radar Chart</h4>
-        <app-stats-chart [pokemon]="pokemon()" />
       </div>
       
       <div class="video-section">
