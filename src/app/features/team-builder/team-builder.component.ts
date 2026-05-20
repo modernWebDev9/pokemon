@@ -24,35 +24,39 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   private trainerStore = inject(TrainerStore);
   private pokemonStore = inject(PokemonStore);
   private elementRef = inject(ElementRef);
-  
+
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
-  
+
   private subscriptions: Subscription[] = [];
-  
+
   // Form state signals
   teamName = signal('');
   selectedPokemonIds = signal<number[]>([]);
   competitiveMode = signal(false);
-  selectedTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>(null);
-  
+  selectedTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>('OU'); // Default to OU
+
   // UI state signals
   loading = signal(true);
   submitting = signal(false);
   error = signal<string | null>(null);
   showSuccess = signal(false);
-  
+
   // Search autocomplete signals
   searchTerm = signal('');
   showDropdown = signal(false);
-  
+
   // Edit dialog signals
   editingTeam = signal<Team | null>(null);
   showEditDialog = signal(false);
-  
+
+  // Team Pokémon modal signals
+  selectedTeam = signal<Team | null>(null);
+  showTeamPokemonModal = signal(false);
+
   // Data signals from stores
   teams = signal<Team[]>([]);
   allPokemon = signal<Pokemon[]>([]);
-  
+
   /**
    * Host listener to close dropdown when clicking outside
    */
@@ -60,12 +64,56 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   onClickOutside(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const searchContainer = this.elementRef.nativeElement.querySelector('.search-container');
-    
+
     if (searchContainer && !searchContainer.contains(target)) {
       this.showDropdown.set(false);
     }
   }
-  
+
+  /**
+   * Gets team icon based on team name
+   */
+  getTeamIcon(teamName: string): string {
+    const icons: Record<string, string> = {
+      'Kanto Starters': '🔥',
+      'Johto Squad': '⚡',
+      'Water Specialists': '💧',
+      'Rock Solid': '🪨',
+      'MyTeam': '⭐'
+    };
+    return icons[teamName] || '⚔️';
+  }
+
+  /**
+   * Gets Pokémon sprite URL by ID
+   */
+  getPokemonSprite(id: number): string {
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+  }
+
+  /**
+   * Opens team Pokémon modal
+   */
+  viewTeamPokemon(team: Team): void {
+    this.selectedTeam.set(team);
+    this.showTeamPokemonModal.set(true);
+  }
+
+  /**
+   * Closes team Pokémon modal
+   */
+  closeTeamPokemonModal(): void {
+    this.showTeamPokemonModal.set(false);
+    this.selectedTeam.set(null);
+  }
+
+  /**
+   * Gets Pokémon details for a team
+   */
+  getTeamPokemonDetails(team: Team): Pokemon[] {
+    return this.allPokemon().filter(p => team.pokemonIds.includes(p.id));
+  }
+
   /**
    * Computed signal for available Pokémon for selection
    * Filters out already selected Pokémon and enforces 6 Pokémon limit
@@ -73,10 +121,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   availablePokemon = computed(() => {
     const selectedIds = this.selectedPokemonIds();
     if (selectedIds.length >= 6) return [];
-    
+
     return this.allPokemon().filter(p => !selectedIds.includes(p.id));
   });
-  
+
   /**
    * Computed signal for filtered search results
    * Shows all available Pokémon when search term is empty (on focus)
@@ -84,23 +132,23 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   searchResults = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    
+
     // When search term is empty (user just clicked on input), show all available Pokémon
     if (term.length === 0) {
       return this.availablePokemon().slice(0, 15);
     }
-    
+
     // When search term is 1 character, wait for at least 2 characters
     if (term.length === 1) {
       return [];
     }
-    
+
     // Filter by search term
     return this.availablePokemon()
       .filter(p => p.name.toLowerCase().includes(term))
       .slice(0, 10);
   });
-  
+
   /**
    * Computed signal for selected Pokémon details
    * Maps selected IDs to full Pokémon objects
@@ -111,7 +159,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       .map(id => this.allPokemon().find(p => p.id === id))
       .filter(p => p !== undefined);
   });
-  
+
   /**
    * Computed signal for team name validation
    * Validates length between 3 and 30 characters
@@ -120,18 +168,23 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     const name = this.teamName().trim();
     return name.length >= 3 && name.length <= 30;
   });
-  
+
   /**
    * Computed signal for form submission eligibility
    * Checks all validation rules and submission state
    */
   canSubmit = computed(() => {
-    return this.isTeamNameValid() && 
-           this.selectedPokemonIds().length >= 1 && 
-           this.selectedPokemonIds().length <= 6 &&
-           !this.submitting();
+    // If competitive mode is on, tier must be selected
+    if (this.competitiveMode() && !this.selectedTier()) {
+      return false;
+    }
+
+    return this.isTeamNameValid() &&
+      this.selectedPokemonIds().length >= 1 &&
+      this.selectedPokemonIds().length <= 6 &&
+      !this.submitting();
   });
-  
+
   /**
    * Computed signal for type coverage analysis
    * Analyzes team type diversity and provides feedback
@@ -140,7 +193,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     const pokemons = this.selectedPokemonDetails();
     const types = new Set<string>();
     pokemons.forEach(p => p.types.forEach((t: string) => types.add(t)));
-    
+
     return {
       count: types.size,
       types: Array.from(types),
@@ -148,7 +201,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       message: types.size >= 3 ? 'Good type diversity!' : 'Consider adding more type variety'
     };
   });
-  
+
   /**
    * Computed signal for type distribution data for chart
    * Transforms team composition into chart-friendly format
@@ -156,16 +209,16 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   typeDistribution = computed<TypeData[]>(() => {
     const pokemons = this.selectedPokemonDetails();
     if (pokemons.length === 0) return [];
-    
+
     const typeCount = new Map<string, number>();
-    
+
     pokemons.forEach(pokemon => {
       pokemon.types.forEach((type: string) => {
         const normalizedType = type.toLowerCase();
         typeCount.set(normalizedType, (typeCount.get(normalizedType) || 0) + 1);
       });
     });
-    
+
     return Array.from(typeCount.entries())
       .map(([type, count]) => ({
         type: type.charAt(0).toUpperCase() + type.slice(1),
@@ -174,7 +227,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       }))
       .sort((a, b) => b.count - a.count);
   });
-  
+
   /**
    * Initializes component by loading data and setting up subscriptions
    */
@@ -193,10 +246,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
         }
       })
     );
-    
-    // Note: Store error subscription removed to prevent cross-component error display
-    // Each component now handles its own errors locally
-    
+
     // Load Pokémon data
     this.pokemonStore.fetchPokemonList(151, 0).subscribe({
       next: (pokemon: Pokemon[]) => {
@@ -207,18 +257,18 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
         this.error.set('Failed to load Pokémon data');
       }
     });
-    
+
     // Set current trainer
     this.trainerStore.setCurrentTrainer('1');
   }
-  
+
   /**
    * Cleans up subscriptions to prevent memory leaks
    */
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
-  
+
   /**
    * Adds Pokémon to team selection
    * Enforces 6 Pokémon maximum limit
@@ -227,12 +277,12 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   addPokemon(pokemon: Pokemon): void {
     if (this.selectedPokemonIds().length >= 6) return;
-    
+
     this.selectedPokemonIds.update(ids => [...ids, pokemon.id]);
     this.searchTerm.set('');
     this.showDropdown.set(false);
   }
-  
+
   /**
    * Removes Pokémon from team selection
    *
@@ -241,7 +291,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   removePokemon(pokemonId: number): void {
     this.selectedPokemonIds.update(ids => ids.filter(id => id !== pokemonId));
   }
-  
+
   /**
    * Handles search input change
    * Shows dropdown when search term has at least 2 characters
@@ -249,7 +299,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   onSearchChange(): void {
     this.showDropdown.set(this.searchTerm().length >= 2);
   }
-  
+
   /**
    * Handles search input focus
    * Shows dropdown with all available Pokémon when input is empty
@@ -261,24 +311,24 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       this.showDropdown.set(true);
     }
   }
-  
+
   /**
    * Prevents dropdown from closing when clicking inside the search container
    */
   onSearchContainerClick(event: MouseEvent): void {
     event.stopPropagation();
   }
-  
+
   /**
    * Creates new team with optimistic UI updates
    * Shows success message and resets form on success
    */
   createTeam(): void {
     if (!this.canSubmit()) return;
-    
+
     this.submitting.set(true);
     this.error.set(null);
-    
+
     this.trainerStore.createTeam({
       name: this.teamName().trim(),
       trainerId: '1',
@@ -289,13 +339,13 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       next: () => {
         this.submitting.set(false);
         this.showSuccess.set(true);
-        
+
         // Reset form
         this.teamName.set('');
         this.selectedPokemonIds.set([]);
         this.competitiveMode.set(false);
-        this.selectedTier.set(null);
-        
+        this.selectedTier.set('OU'); // Reset to default OU
+
         setTimeout(() => this.showSuccess.set(false), 3000);
       },
       error: (err: any) => {
@@ -305,7 +355,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   /**
    * Opens edit dialog for a team
    *
@@ -315,7 +365,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     this.editingTeam.set(team);
     this.showEditDialog.set(true);
   }
-  
+
   /**
    * Updates team with optimistic UI updates
    *
@@ -323,8 +373,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    * @param updates - Partial team data to update
    */
   updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId' | 'pokemonIds'>>): void {
+    console.log('Updating team:', id, updates);
     this.trainerStore.updateTeam(id, updates).subscribe({
       next: () => {
+        console.log('Team updated successfully');
         this.showEditDialog.set(false);
         this.editingTeam.set(null);
       },
@@ -335,7 +387,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   /**
    * Deletes a team with confirmation dialog
    *

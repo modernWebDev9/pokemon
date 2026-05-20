@@ -1,0 +1,77 @@
+<div class="dialog-overlay" (click)="onClose()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    
+    <div class="dialog-header">
+      <h3>✏️ Edit Team</h3>
+      <button class="close-btn" (click)="onClose()">✕</button>
+    </div>
+    
+    <div class="dialog-content">
+      
+      <!-- Team Name Input -->
+      <div class="form-group">
+        <label for="editTeamName">Team Name</label>
+        <input 
+          id="editTeamName"
+          type="text" 
+          [(ngModel)]="editName"
+          placeholder="Enter team name (3-30 characters)"
+          class="form-input" />
+        @if (editName().length > 0 && (editName().length < 3 || editName().length > 30)) {
+          <div class="error-hint">
+            Team name must be 3-30 characters
+          </div>
+        }
+      </div>
+      
+      <!-- Competitive Mode Toggle -->
+      <div class="checkbox-wrapper">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="editCompetitiveMode"
+            (ngModelChange)="onCompetitiveModeChange($event)" />
+          <span class="checkbox-text">
+            Competitive Mode
+            <span class="checkbox-description">(EV Training)</span>
+          </span>
+        </label>
+      </div>
+      
+      <!-- Tier Selection (conditional) -->
+      @if (editCompetitiveMode()) {
+        <div class="ev-section">
+          <div class="ev-header">
+            <span class="ev-icon">⚡</span>
+            <span class="ev-title">Competitive Configuration</span>
+          </div>
+          
+          <div class="ev-group">
+            <label for="editTierSelect">Battle Tier</label>
+            <div class="select-wrapper">
+              <select 
+                id="editTierSelect"
+                [(ngModel)]="editTier" 
+                class="form-input ev-select">
+                <option value="OU">OU (OverUsed) — Standard competitive</option>
+                <option value="UU">UU (UnderUsed) — Slightly restricted</option>
+                <option value="RU">RU (RarelyUsed) — Moderate restrictions</option>
+                <option value="NU">NU (NeverUsed) — Maximum variety</option>
+              </select>
+              <div class="select-arrow">▼</div>
+            </div>
+          </div>
+        </div>
+      }
+      
+    </div>
+    
+    <div class="dialog-footer">
+      <button class="cancel-btn" (click)="onClose()">Cancel</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="!isValid()">
+        Save Changes
+      </button>
+    </div>
+    
+  </div>
+</div>

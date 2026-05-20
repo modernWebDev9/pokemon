@@ -617,7 +617,7 @@ select.form-input option {
 .checkbox-wrapper {
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .checkbox-label {
@@ -653,36 +653,127 @@ select.form-input option {
 }
 
 /* ============================================
-   EV Section
+   EV Section - Refined Styling
    ============================================ */
 .ev-section {
-  margin-top: 20px;
+  margin: 0 0 24px 0;
   padding: 20px;
-  background: var(--bg-secondary, #0f0f0f);
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.03), rgba(179, 0, 255, 0.03));
   border-radius: 20px;
-  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  transition: all 0.3s ease;
   
-  .ev-group {
-    margin-bottom: 16px;
-    
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: var(--text-secondary, #a0a0a0);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+  &:hover {
+    border-color: rgba(0, 245, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 245, 255, 0.05);
   }
 }
 
-.ev-hint {
-  font-size: 0.7rem;
-  color: var(--text-tertiary, #6b6b6b);
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.05));
+.ev-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+  
+  .ev-icon {
+    font-size: 1.2rem;
+  }
+  
+  .ev-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #00f5ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
+
+.ev-group {
+  margin-bottom: 20px;
+  
+  label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #a0a0a0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Custom Select Wrapper */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+  
+  .ev-select {
+    width: 100%;
+    padding: 14px 40px 14px 18px;
+    background: var(--bg-secondary, #0f0f0f);
+    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border-radius: 60px;
+    font-size: 0.85rem;
+    color: var(--text-primary, white);
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.2s;
+    
+    &:hover {
+      border-color: rgba(0, 245, 255, 0.5);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #00f5ff;
+      box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+    }
+    
+    option {
+      background: var(--bg-secondary, #1a1a1a);
+      color: var(--text-primary, white);
+      padding: 12px;
+    }
+  }
+  
+  .select-arrow {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: var(--text-secondary, #a0a0a0);
+    pointer-events: none;
+    transition: all 0.2s;
+  }
+  
+  &:hover .select-arrow {
+    color: #00f5ff;
+  }
+}
+
+.ev-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 245, 255, 0.05);
+  border-radius: 16px;
+  border-left: 3px solid #00f5ff;
+  
+  .ev-info-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .ev-info-text {
+    font-size: 0.7rem;
+    color: var(--text-tertiary, #6b6b6b);
+    line-height: 1.4;
+  }
 }
 
 /* ============================================
@@ -783,6 +874,14 @@ select.form-input option {
   .checkbox-label {
     flex-wrap: wrap;
   }
+  
+  .ev-section {
+    padding: 16px;
+  }
+  
+  .ev-header {
+    flex-wrap: wrap;
+  }
 }
 
 /* ============================================
@@ -871,5 +970,281 @@ select.form-input option {
   
   .checkbox-label .checkbox-description {
     color: #999;
+  }
+  
+  /* Light Theme EV Section */
+  .ev-section {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    border-color: rgba(102, 126, 234, 0.2);
+    
+    &:hover {
+      border-color: rgba(102, 126, 234, 0.4);
+    }
+  }
+  
+  .ev-header {
+    border-bottom-color: rgba(102, 126, 234, 0.2);
+    
+    .ev-title {
+      color: #667eea;
+    }
+  }
+  
+  .select-wrapper {
+    .ev-select {
+      background: #f5f5f5;
+      color: #1a1a1a;
+      
+      option {
+        background: white;
+        color: #1a1a1a;
+      }
+    }
+    
+    .select-arrow {
+      color: #999;
+    }
+    
+    &:hover .select-arrow {
+      color: #667eea;
+    }
+  }
+  
+  .ev-info {
+    background: rgba(102, 126, 234, 0.05);
+    border-left-color: #667eea;
+    
+    .ev-info-text {
+      color: #888;
+    }
+  }
+}
+
+/* Tier Badge */
+.tier-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Team Card - Make entire card clickable */
+.team-card {
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateX(4px);
+    border-color: rgba(0, 245, 255, 0.3);
+    background: var(--bg-tertiary, #252525);
+  }
+}
+
+/* Team Actions - Prevent click propagation */
+.team-actions {
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+  
+  button {
+    position: relative;
+    z-index: 3;
+  }
+}
+
+/* ============================================
+   Team Pokémon Modal
+   ============================================ */
+.team-pokemon-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-pokemon-modal {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 28px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+  animation: modalSlideIn 0.2s ease-out;
+  
+  .team-pokemon-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .team-icon-large {
+        font-size: 1.5rem;
+      }
+      
+      h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: white;
+      }
+    }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: rgba(239, 68, 68, 0.8);
+      }
+    }
+  }
+  
+  .team-pokemon-modal-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    
+    .pokemon-count-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(0, 245, 255, 0.15);
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: #00f5ff;
+      margin-bottom: 20px;
+    }
+    
+    .pokemon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 16px;
+      
+      .pokemon-card {
+        text-align: center;
+        padding: 12px;
+        background: var(--bg-secondary, #0f0f0f);
+        border-radius: 16px;
+        transition: all 0.2s;
+        
+        &:hover {
+          transform: translateY(-4px);
+          background: rgba(0, 245, 255, 0.08);
+        }
+        
+        .pokemon-image {
+          width: 80px;
+          height: 80px;
+          object-fit: contain;
+        }
+        
+        .pokemon-name {
+          display: block;
+          margin-top: 8px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: var(--text-primary, white);
+          text-transform: capitalize;
+        }
+      }
+    }
+    
+    .no-pokemon {
+      text-align: center;
+      padding: 40px;
+      
+      span {
+        font-size: 2rem;
+        opacity: 0.5;
+        display: block;
+        margin-bottom: 8px;
+      }
+      
+      p {
+        color: var(--text-secondary, #a0a0a0);
+        font-size: 0.85rem;
+        margin: 0;
+      }
+    }
+  }
+  
+  .team-pokemon-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+    
+    .close-modal-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Light Theme Modal */
+[data-theme="light"] {
+  .team-pokemon-modal {
+    background: #ffffff;
+    
+    .pokemon-card {
+      background: #f8f9fa;
+      
+      .pokemon-name {
+        color: #1a1a1a;
+      }
+    }
+    
+    .pokemon-count-badge {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+    }
+  }
+  
+  .tier-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
   }
 }
