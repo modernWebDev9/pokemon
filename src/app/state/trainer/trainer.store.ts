@@ -142,7 +142,6 @@ export class TrainerStore {
       }),
       catchError((error) => {
         console.error('Load trainer error:', error);
-        this.setError(error.message || 'Failed to load trainer');
         this.setLoading(false);
         return throwError(() => error);
       })
@@ -170,7 +169,6 @@ export class TrainerStore {
       }),
       catchError((error) => {
         console.error('Load teams error:', error);
-        this.setError(error.message || 'Failed to load teams');
         return throwError(() => error);
       })
     );
@@ -197,7 +195,6 @@ export class TrainerStore {
       }),
       catchError((error) => {
         console.error('Load battles error:', error);
-        this.setError(error.message || 'Failed to load battles');
         return of([]);
       })
     );
@@ -268,7 +265,7 @@ export class TrainerStore {
         this.stateSubject.next({
           ...this.stateSubject.value,
           teams: rolledBackTeams,
-          error: error.message || 'Failed to create team',
+          error: null,
         });
 
         return throwError(() => error);
@@ -333,7 +330,7 @@ export class TrainerStore {
           teams: this.stateSubject.value.teams.map((team: Team) =>
             team.id === id ? originalTeam : team
           ),
-          error: error.message || 'Failed to update team',
+          error: null,
         });
 
         return throwError(() => error);
@@ -373,7 +370,7 @@ export class TrainerStore {
         this.stateSubject.next({
           ...this.stateSubject.value,
           teams: [...this.stateSubject.value.teams, deletedTeam],
-          error: error.message || 'Failed to delete team',
+          error: null,
         });
 
         return throwError(() => error);
@@ -450,7 +447,7 @@ export class TrainerStore {
         let errorMessage = 'Failed to update profile';
         
         if (error.status === 500) {
-          errorMessage = 'Server error: The avatar image may be too large. Please use a smaller image (max 70KB original).';
+          errorMessage = 'Server error: The avatar image may be too large. Please use a smaller image (max 500KB original).';
         } else if (error.status === 413) {
           errorMessage = 'Avatar image too large for the server. Please use a smaller image.';
         } else if (error.status === 400) {
@@ -463,7 +460,7 @@ export class TrainerStore {
         this.stateSubject.next({
           ...this.stateSubject.value,
           trainer: currentState.trainer,
-          error: errorMessage,
+          error: null, // 전역 에러를 설정하지 않음
         });
         
         return throwError(() => new Error(errorMessage));

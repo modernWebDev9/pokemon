@@ -194,15 +194,8 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       })
     );
     
-    // Load error from store
-    this.subscriptions.push(
-      this.trainerStore.error$.subscribe((error: string | null) => {
-        if (error) {
-          this.error.set(error);
-          setTimeout(() => this.error.set(null), 3000);
-        }
-      })
-    );
+    // Note: Store error subscription removed to prevent cross-component error display
+    // Each component now handles its own errors locally
     
     // Load Pokémon data
     this.pokemonStore.fetchPokemonList(151, 0).subscribe({

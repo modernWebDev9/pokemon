@@ -1,4 +1,3 @@
-<!-- src/app/features/battle-log/battle-log.component.html -->
 <div class="battle-log-container">
   
   <!-- Header -->
@@ -7,23 +6,58 @@
     <p>Real-time battle updates (polling every 5 seconds)</p>
   </div>
   
-  <!-- Statistics Cards -->
-  <div class="stats-cards">
-    <div class="stat-card">
-      <div class="stat-value">{{ battleStats().total }}</div>
-      <div class="stat-label">Total Battles</div>
+  <!-- Single Stats Card - All stats in one container -->
+  <div class="stats-single-card">
+    <div class="stats-grid-four">
+      <div class="stat-item">
+        <span class="stat-value">{{ battleStats().total }}</span>
+        <span class="stat-label">Total Battles</span>
+      </div>
+      <div class="stat-item win">
+        <span class="stat-value">{{ battleStats().wins }}</span>
+        <span class="stat-label">Wins</span>
+      </div>
+      <div class="stat-item loss">
+        <span class="stat-value">{{ battleStats().losses }}</span>
+        <span class="stat-label">Losses</span>
+      </div>
+      <div class="stat-item rate">
+        <span class="stat-value">{{ battleStats().winRate }}%</span>
+        <span class="stat-label">Win Rate</span>
+      </div>
     </div>
-    <div class="stat-card win">
-      <div class="stat-value">{{ battleStats().wins }}</div>
-      <div class="stat-label">Wins</div>
+  </div>
+  
+  <!-- Team Performance Section - Clickable Teams -->
+  <div class="team-performance-section">
+    <div class="section-header">
+      <h3>🏆 Team Performance</h3>
+      <span class="team-count">{{ teamRecords().length }} teams</span>
     </div>
-    <div class="stat-card loss">
-      <div class="stat-value">{{ battleStats().losses }}</div>
-      <div class="stat-label">Losses</div>
-    </div>
-    <div class="stat-card rate">
-      <div class="stat-value">{{ battleStats().winRate }}%</div>
-      <div class="stat-label">Win Rate</div>
+    
+    <div class="team-list">
+      @for (record of teamRecords(); track record.teamId) {
+        <div class="team-item" (click)="viewTeamPokemon(record.team!)">
+          <div class="team-info">
+            <span class="team-icon">{{ getTeamIcon(record.teamName) }}</span>
+            <span class="team-name">{{ record.teamName }}</span>
+          </div>
+          <div class="team-stats-compact">
+            <span class="team-wins">{{ record.wins }}W</span>
+            <span class="team-losses">{{ record.losses }}L</span>
+            <span class="team-winrate">{{ record.winRate }}%</span>
+          </div>
+          <div class="team-progress-bar">
+            <div class="progress-fill" [style.width.%]="record.winRate"></div>
+          </div>
+          <span class="team-view-icon">👁️</span>
+        </div>
+      } @empty {
+        <div class="no-teams">
+          <span>📊</span>
+          <p>No team records available</p>
+        </div>
+      }
     </div>
   </div>
   
@@ -31,82 +65,258 @@
   <div class="chart-section">
     <div class="chart-header">
       <h3>Monthly Battle Results</h3>
-      <div class="chart-summary" *ngIf="totalBattlesSummary().total > 0">
-        <span class="summary-win">🏆 Wins: {{ totalBattlesSummary().totalWins }}</span>
-        <span class="summary-loss">💔 Losses: {{ totalBattlesSummary().totalLosses }}</span>
-        <span class="summary-total">⚔️ Total: {{ totalBattlesSummary().total }}</span>
-      </div>
     </div>
     <app-battle-chart [battles]="monthlyBattleData()" />
   </div>
   
-  <!-- Controls Bar -->
-  <div class="controls-bar">
-    <div class="severity-filters">
-      @for (option of severityOptions; track option.value) {
-        <button 
-          class="filter-btn"
-          [class.active]="selectedSeverity() === option.value"
-          [style.border-color]="option.color"
-          (click)="setSeverityFilter(option.value)">
-          <span>{{ option.icon }}</span>
-          {{ option.label }}
+  <!-- Battle History Table with Pagination in Header -->
+  <div class="battle-history-section">
+    <div class="table-header-with-pagination">
+      <h3>📋 Battle History</h3>
+      <div class="pagination-controls-group">
+        <div class="items-per-page">
+          <span>Rows per page:</span>
+          <select [value]="itemsPerPage()" (change)="onItemsPerPageChange($event)">
+            @for (option of itemsPerPageOptions; track option) {
+              <option [value]="option" [selected]="itemsPerPage() === option">{{ option }}</option>
+            }
+          </select>
+        </div>
+        <div class="pagination-buttons">
+          <button 
+            class="page-btn" 
+            [class.disabled]="currentPage() === 1"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Prev
+          </button>
+          <span class="page-info">{{ currentPage() }} / {{ totalPages() }}</span>
+          <button 
+            class="page-btn" 
+            [class.disabled]="currentPage() === totalPages()"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)">
+            Next
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="battles-table-container">
+      <table class="battles-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Opponent</th>
+            <th>Team</th>
+            <th>Score</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (battle of paginatedBattles(); track battle.id) {
+            <tr class="battle-row" [class]="getResultClass(battle.result)" (click)="viewBattleDetail(battle)">
+              <td class="battle-date">{{ formatDate(battle.date) }}</td>
+              <td class="battle-opponent">
+                <span class="opponent-name">{{ battle.opponentName }}</span>
+              </td>
+              <td class="battle-team">
+                <span class="team-badge">{{ getTeamIcon(battle.teamName) }} {{ battle.teamName }}</span>
+              </td>
+              <td class="battle-score-cell">
+                <div class="battle-score-display">
+                  <span class="score-you">{{ battle.scoreTrainer }}</span>
+                  <span class="score-sep">:</span>
+                  <span class="score-opponent">{{ battle.scoreOpponent }}</span>
+                </div>
+              </td>
+              <td class="battle-result-cell">
+                <span class="result-badge" [class]="getResultClass(battle.result)">
+                  {{ getResultIcon(battle.result) }} {{ battle.result === 'win' ? 'Win' : 'Loss' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr class="no-battles-row">
+              <td colspan="5">
+                <div class="no-battles">
+                  <span class="no-battles-icon">⚔️</span>
+                  <p>No battles recorded yet</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+       </table>
+    </div>
+    
+    <div class="table-footer-info">
+      Showing <strong>{{ pageRange().start }}-{{ pageRange().end }}</strong> of <strong>{{ pageRange().total }}</strong> battles
+    </div>
+  </div>
+  
+  <!-- Real-time Battle Log Section -->
+  <div class="realtime-log-section">
+    <div class="section-header">
+      <h3>🔴 Live Battle Feed</h3>
+      <div class="polling-status">
+        <div class="status-dot"></div>
+        <span>Updates every 5s</span>
+      </div>
+    </div>
+    
+    <div class="controls-bar">
+      <div class="severity-filters">
+        @for (option of severityOptions; track option.value) {
+          <button 
+            class="filter-btn"
+            [class.active]="selectedSeverity() === option.value"
+            (click)="setSeverityFilter(option.value)">
+            <span>{{ option.icon }}</span>
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" (click)="refreshLogs()" [disabled]="loading()">
+          🔄 Refresh
         </button>
+        <button class="action-btn" (click)="toggleAutoScroll()" [class.active]="autoScroll()">
+          {{ autoScroll() ? '📌 Auto-scroll On' : '📌 Auto-scroll Off' }}
+        </button>
+        <button class="action-btn clear" (click)="clearLogs()">
+          🗑️ Clear
+        </button>
+      </div>
+    </div>
+    
+    <div class="log-container">
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="pokeball-spinner"></div>
+          <p>Loading battle logs...</p>
+        </div>
+      } @else if (groupedLogs().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">⚔️</span>
+          <p>No battle logs yet</p>
+        </div>
+      } @else {
+        @for (group of groupedLogs(); track group.date) {
+          <div class="log-group">
+            <div class="group-date">{{ group.date }}</div>
+            @for (log of group.logs; track $index) {
+              <div class="log-entry" [class]="getSeverityClass(log.severity)">
+                <div class="log-time">{{ getRelativeTime(log.timestamp) }}</div>
+                <div class="log-icon">{{ severityIcon[log.severity] }}</div>
+                <div class="log-message">{{ log.message }}</div>
+              </div>
+            }
+          </div>
+        }
       }
     </div>
     
-    <div class="action-buttons">
-      <button class="action-btn" (click)="refreshLogs()" [disabled]="loading()">
-        🔄 Refresh
-      </button>
-      <button class="action-btn" (click)="toggleAutoScroll()" [class.active]="autoScroll()">
-        {{ autoScroll() ? '📌 Auto-scroll On' : '📌 Auto-scroll Off' }}
-      </button>
-      <button class="action-btn clear" (click)="clearLogs()">
-        🗑️ Clear
-      </button>
+    <div class="footer-info">
+      <span>📡 Polling: 5 seconds</span>
+      <span>📊 {{ battleLogs().length }} total logs</span>
     </div>
   </div>
   
-  <!-- Polling Status Indicator -->
-  <div class="polling-status">
-    <div class="status-dot"></div>
-    <span>Live updates every 5 seconds</span>
+</div>
+
+<!-- Battle Detail Modal -->
+@if (showBattleDetail() && selectedBattle()) {
+  <div class="battle-modal-overlay" (click)="closeBattleDetail()">
+    <div class="battle-modal" (click)="$event.stopPropagation()">
+      <div class="battle-modal-header" [class]="getResultClass(selectedBattle()!.result)">
+        <h3>{{ selectedBattle()!.result === 'win' ? 'Victory!' : 'Defeat' }}</h3>
+        <button class="modal-close" (click)="closeBattleDetail()">✕</button>
+      </div>
+      
+      <div class="battle-modal-content">
+        <div class="battle-detail-row">
+          <span class="detail-label">Date:</span>
+          <span class="detail-value">{{ formatDate(selectedBattle()!.date) }}</span>
+        </div>
+        <div class="battle-detail-row">
+          <span class="detail-label">Opponent:</span>
+          <span class="detail-value">{{ selectedBattle()!.opponentName }}</span>
+        </div>
+        <div class="battle-detail-row">
+          <span class="detail-label">Team:</span>
+          <span class="detail-value team-name-value">
+            <span class="team-icon-detail">{{ getTeamIcon(selectedBattle()!.teamName) }}</span>
+            {{ selectedBattle()!.teamName }}
+          </span>
+        </div>
+        <div class="battle-score-detail">
+          <div class="score-box">
+            <div class="score-label">Trainer</div>
+            <div class="score-number">{{ selectedBattle()!.scoreTrainer }}</div>
+          </div>
+          <div class="score-vs">VS</div>
+          <div class="score-box opponent">
+            <div class="score-label">{{ selectedBattle()!.opponentName }}</div>
+            <div class="score-number">{{ selectedBattle()!.scoreOpponent }}</div>
+          </div>
+        </div>
+        <div class="battle-detail-row result-row">
+          <span class="detail-label">Result:</span>
+          <span class="result-badge detail" [class]="getResultClass(selectedBattle()!.result)">
+            {{ selectedBattle()!.result === 'win' ? '🏆 Win' : '💔 Loss' }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="battle-modal-footer">
+        <button class="close-modal-btn" (click)="closeBattleDetail()">Close</button>
+      </div>
+    </div>
   </div>
-  
-  <!-- Log Container -->
-  <div class="log-container">
-    @if (loading()) {
-      <div class="loading-state">
-        <div class="pokeball-spinner"></div>
-        <p>Loading battle logs...</p>
+}
+
+<!-- Team Pokémon Modal -->
+@if (showTeamPokemonModal() && selectedTeam()) {
+  <div class="team-pokemon-modal-overlay" (click)="closeTeamPokemonModal()">
+    <div class="team-pokemon-modal" (click)="$event.stopPropagation()">
+      <div class="team-pokemon-modal-header">
+        <div class="header-info">
+          <span class="team-icon-large">{{ getTeamIcon(selectedTeam()!.name) }}</span>
+          <h3>{{ selectedTeam()!.name }}</h3>
+        </div>
+        <button class="modal-close" (click)="closeTeamPokemonModal()">✕</button>
       </div>
-    } @else if (groupedLogs().length === 0) {
-      <div class="empty-state">
-        <span class="empty-icon">⚔️</span>
-        <p>No battle logs yet</p>
-        <p class="empty-hint">Battle results will appear here in real-time</p>
-      </div>
-    } @else {
-      @for (group of groupedLogs(); track group.date) {
-        <div class="log-group">
-          <div class="group-date">{{ group.date }}</div>
-          @for (log of group.logs; track $index) {
-            <div class="log-entry" [class]="getSeverityClass(log.severity)">
-              <div class="log-time">{{ getRelativeTime(log.timestamp) }}</div>
-              <div class="log-icon">{{ severityIcon[log.severity] }}</div>
-              <div class="log-message">{{ log.message }}</div>
+      
+      <div class="team-pokemon-modal-content">
+        <div class="pokemon-count-badge">
+          {{ getTeamPokemonDetails(selectedTeam()!).length }} Pokémon
+        </div>
+        <div class="pokemon-grid">
+          @for (pokemon of getTeamPokemonDetails(selectedTeam()!); track pokemon.id) {
+            <div class="pokemon-card">
+              <img [src]="getPokemonSprite(pokemon.id)" [alt]="pokemon.name" class="pokemon-image">
+              <span class="pokemon-name">{{ pokemon.name }}</span>
+            </div>
+          } @empty {
+            <div class="no-pokemon">
+              <span>🐾</span>
+              <p>No Pokémon in this team</p>
             </div>
           }
         </div>
-      }
-    }
+      </div>
+      
+      <div class="team-pokemon-modal-footer">
+        <button class="close-modal-btn" (click)="closeTeamPokemonModal()">Close</button>
+      </div>
+    </div>
   </div>
-  
-  <!-- Footer Info -->
-  <div class="footer-info">
-    <span>📡 Polling interval: 5 seconds</span>
-    <span>📊 Total logs: {{ battleLogs().length }}</span>
-  </div>
-  
-</div>
+}
