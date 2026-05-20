@@ -144,13 +144,16 @@
         }
         
         <!-- Competitive Mode Toggle -->
-        <div class="form-group">
+        <div class="checkbox-wrapper">
           <label class="checkbox-label">
             <input 
               type="checkbox" 
               [ngModel]="competitiveMode()"
               (ngModelChange)="competitiveMode.set($event)" />
-            Competitive Mode (EV Training)
+            <span class="checkbox-text">
+              Competitive Mode
+              <span class="checkbox-description">(EV Training)</span>
+            </span>
           </label>
         </div>
         

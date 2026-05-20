@@ -611,33 +611,78 @@ select.form-input option {
   }
 }
 
-/* Checkbox */
+/* ============================================
+   Checkbox - Fixed vertical alignment
+   ============================================ */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
+  user-select: none;
   
-  input {
+  input[type="checkbox"] {
     width: 18px;
     height: 18px;
+    margin: 0;
     accent-color: #00f5ff;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  
+  .checkbox-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary, white);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  
+  .checkbox-description {
+    font-size: 0.7rem;
+    color: var(--text-tertiary, #6b6b6b);
+    margin-left: 4px;
+    font-weight: normal;
   }
 }
 
-/* EV Section */
+/* ============================================
+   EV Section
+   ============================================ */
 .ev-section {
   margin-top: 20px;
   padding: 20px;
   background: var(--bg-secondary, #0f0f0f);
   border-radius: 20px;
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.05));
+  
+  .ev-group {
+    margin-bottom: 16px;
+    
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary, #a0a0a0);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
 }
 
 .ev-hint {
   font-size: 0.7rem;
   color: var(--text-tertiary, #6b6b6b);
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.05));
 }
 
 /* ============================================
@@ -734,6 +779,10 @@ select.form-input option {
   .header h2 {
     font-size: 1.6rem;
   }
+  
+  .checkbox-label {
+    flex-wrap: wrap;
+  }
 }
 
 /* ============================================
@@ -814,5 +863,13 @@ select.form-input option {
     &:hover:not(:disabled) {
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
+  }
+  
+  .checkbox-label .checkbox-text {
+    color: #1a1a1a;
+  }
+  
+  .checkbox-label .checkbox-description {
+    color: #999;
   }
 }
