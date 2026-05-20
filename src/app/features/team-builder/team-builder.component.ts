@@ -63,12 +63,23 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   
   /**
    * Computed signal for filtered search results
-   * Shows top 10 matches for autocomplete dropdown
+   * Shows all available Pokémon when search term is empty (on focus)
+   * Shows top matches when search term is 2+ characters
    */
   searchResults = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    if (term.length < 2) return [];
     
+    // When search term is empty (user just clicked on input), show all available Pokémon
+    if (term.length === 0) {
+      return this.availablePokemon().slice(0, 15);
+    }
+    
+    // When search term is 1 character, wait for at least 2 characters
+    if (term.length === 1) {
+      return [];
+    }
+    
+    // Filter by search term
     return this.availablePokemon()
       .filter(p => p.name.toLowerCase().includes(term))
       .slice(0, 10);
@@ -228,6 +239,18 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   onSearchChange(): void {
     this.showDropdown.set(this.searchTerm().length >= 2);
+  }
+  
+  /**
+   * Handles search input focus
+   * Shows dropdown with all available Pokémon when input is empty
+   * This helps users discover available Pokémon without knowing names
+   */
+  onSearchFocus(): void {
+    // Show dropdown with all available Pokémon if search term is empty
+    if (this.searchTerm().length === 0 && this.availablePokemon().length > 0) {
+      this.showDropdown.set(true);
+    }
   }
   
   /**

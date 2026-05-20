@@ -617,3 +617,29 @@ select.form-input option {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
   }
 }
+
+.search-hint {
+  font-size: 0.7rem;
+  color: var(--text-tertiary, #6b6b6b);
+  margin-top: 6px;
+  margin-left: 16px;
+}
+
+/* Empty Search Result */
+.search-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 0.85rem;
+}
+
+/* Light Theme Override for new elements */
+[data-theme="light"] {
+  .search-hint {
+    color: #999;
+  }
+  
+  .search-empty {
+    color: #666;
+  }
+}
