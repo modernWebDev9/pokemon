@@ -1,9 +1,7 @@
-// src/app/features/trainer-profile/trainer-profile.component.ts
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrainerStore, Trainer, Battle } from '../../state/trainer/trainer.store';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-trainer-profile',
@@ -15,7 +13,6 @@ import { HttpClient } from '@angular/common/http';
 })
 export class TrainerProfileComponent implements OnInit {
   private trainerStore = inject(TrainerStore);
-  private http = inject(HttpClient);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -34,11 +31,12 @@ export class TrainerProfileComponent implements OnInit {
   editName = signal('');
   editRegion = signal('');
   editRank = signal('');
-
-  // Avatar upload
-  selectedFile = signal<File | null>(null);
+  editAvatarUrl = signal('');
+  
+  // Avatar preview for newly selected file
   avatarPreviewUrl = signal<string | null>(null);
-  avatarRefreshKey = signal(0);
+  originalAvatarUrl = signal<string>('');
+
   error = signal<string | null>(null);
   success = signal<string | null>(null);
 
@@ -62,6 +60,14 @@ export class TrainerProfileComponent implements OnInit {
         this.editName.set(trainer.name);
         this.editRegion.set(trainer.region);
         this.editRank.set(trainer.rank);
+        this.editAvatarUrl.set(trainer.avatarUrl || '');
+        this.originalAvatarUrl.set(trainer.avatarUrl || '');
+        
+        if (trainer.avatarUrl && trainer.avatarUrl.startsWith('data:image/')) {
+          this.avatarPreviewUrl.set(trainer.avatarUrl);
+        } else {
+          this.avatarPreviewUrl.set(null);
+        }
       }
     });
 
@@ -78,70 +84,36 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
-  /**
-   * Gets the initial letter from trainer name for avatar placeholder
-   */
   getInitial(): string {
     const name = this.trainer()?.name;
     if (!name) return 'T';
     return name.charAt(0).toUpperCase();
   }
 
-  /**
-   * Gets the display URL for trainer avatar
-   * Returns preview URL for newly selected file or saved avatar URL
-   */
   getDisplayAvatarUrl(): string {
     const trainer = this.trainer();
-    if (!trainer) return '';
-
-    // Show preview first if file is selected
     const preview = this.avatarPreviewUrl();
     if (preview) {
-      console.log('Showing preview image');
       return preview;
     }
-
-    // Show saved avatar
-    if (trainer.avatarUrl && trainer.avatarUrl !== '') {
-      console.log('=== Avatar Debug Info ===');
-      console.log('Raw avatarUrl from store:', trainer.avatarUrl);
-
-      // avatarUrl이 /avatars/로 시작하면 그대로 사용
-      // Angular proxy가 /avatars를 http://localhost:3000/avatars로 프록시함
-      console.log('Returning avatar URL:', trainer.avatarUrl);
+    if (trainer?.avatarUrl && trainer.avatarUrl !== '') {
       return trainer.avatarUrl;
     }
-
-    console.log('No avatar URL found');
     return '';
   }
 
-  /**
-   * Gets avatar URL with cache buster to force reload
-   */
-  getAvatarWithCacheBuster(): string {
-    const url = this.getDisplayAvatarUrl();
-    if (!url) return '';
-
-    if (url.startsWith('data:')) {
-      return url;
-    }
-
-    return `${url}?t=${this.avatarRefreshKey()}`;
-  }
-
-  /**
-   * Handles image loading errors
-   */
   onImageError(event: Event): void {
-    console.log('Image load error, falling back to initial');
+    console.log('Image load error, clearing avatar URL');
     const trainer = this.trainer();
     if (trainer && trainer.avatarUrl) {
-      // Clear invalid avatar URL using GraphQL mutation
       this.trainerStore.updateTrainer(trainer.id, { avatarUrl: '' }).subscribe({
-        next: () => {
-          this.avatarRefreshKey.update(v => v + 1);
+        next: (updatedTrainer) => {
+          this.trainer.set(updatedTrainer);
+          this.editAvatarUrl.set('');
+          this.avatarPreviewUrl.set(null);
+          this.originalAvatarUrl.set('');
+          this.error.set('Avatar image could not be loaded. URL has been cleared.');
+          setTimeout(() => this.error.set(null), 3000);
         },
         error: (err) => {
           console.error('Failed to clear avatar:', err);
@@ -150,190 +122,149 @@ export class TrainerProfileComponent implements OnInit {
     }
   }
 
-  /**
-   * Triggers file input click for avatar upload
-   */
   triggerFileUpload(): void {
-    console.log('Triggering file upload');
     this.fileInput?.nativeElement.click();
   }
 
   /**
-   * Handles file selection from input
+   * 이미지 압축 함수 - Canvas를 사용하여 이미지 크기 줄이기
    */
-  onFileSelected(event: Event): void {
-    console.log('File selected event triggered');
+  compressImage(file: File, maxWidth: number = 200, maxHeight: number = 200, quality: number = 0.6): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // 새 크기 계산 (종횡비 유지)
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          // Canvas로 이미지 리사이즈 및 압축
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // JPEG로 압축 (품질 0.6)
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          console.log(`Compressed: ${(file.size / 1024).toFixed(1)}KB → ${(dataUrl.length / 1024).toFixed(1)}KB, ${width}x${height}`);
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Handles file selection - compresses and converts to Base64
+   */
+  async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
 
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      console.log('File selected:', file.name, file.type, file.size);
+      console.log('File selected:', file.name, file.type, (file.size / 1024).toFixed(1) + 'KB');
 
       if (!file.type.startsWith('image/')) {
-        this.error.set('Please select an image file');
+        this.error.set('Please select an image file (JPG, PNG, GIF, WebP)');
         setTimeout(() => this.error.set(null), 3000);
         return;
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        this.error.set('Image size must be less than 2MB');
+      // 더 엄격한 크기 제한: 200KB
+      if (file.size > 200 * 1024) {
+        this.error.set('Image size must be less than 200KB (will be compressed further)');
         setTimeout(() => this.error.set(null), 3000);
         return;
       }
 
-      this.selectedFile.set(file);
+      this.isUploading.set(true);
+      this.error.set(null);
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const previewUrl = e.target?.result as string;
-        console.log('Preview created');
-        this.avatarPreviewUrl.set(previewUrl);
-        this.avatarRefreshKey.update(v => v + 1);
-      };
-      reader.onerror = (err) => {
-        console.error('FileReader error:', err);
-        this.error.set('Failed to read image file');
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  /**
-   * Uploads avatar and updates via GraphQL mutation
-   */
-  uploadAvatar(): void {
-    const file = this.selectedFile();
-    const trainer = this.trainer();
-
-    console.log('uploadAvatar called', { file: !!file, trainer: !!trainer, trainerId: trainer?.id });
-
-    if (!file || !trainer) {
-      console.error('Missing file or trainer');
-      return;
-    }
-
-    this.isUploading.set(true);
-    this.error.set(null);
-
-    const formData = new FormData();
-    formData.append('avatar', file);
-    formData.append('trainerId', trainer.id);
-
-    console.log('Uploading file to avatar server...');
-    console.log('FormData entries:');
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
-    // 1. 파일 업로드
-    this.http.post('http://localhost:3000/api/upload-avatar', formData).subscribe({
-      next: (response: any) => {
-        console.log('Upload response received:', response);
-
-        // avatarUrl만 있으면 성공으로 간주
-        if (response.avatarUrl) {
-          // 2. GraphQL mutation으로 avatar_url 업데이트
-          console.log('Updating avatar URL via GraphQL mutation...', response.avatarUrl);
-          this.trainerStore.updateTrainer(trainer.id, { avatarUrl: response.avatarUrl }).subscribe({
-            next: (updatedTrainer) => {
-              console.log('Trainer avatar updated successfully:', updatedTrainer);
-              this.trainer.set(updatedTrainer);
-              this.avatarRefreshKey.update(v => v + 1);
-
-              this.isUploading.set(false);
-              this.selectedFile.set(null);
-              this.avatarPreviewUrl.set(null);
-              this.success.set('Avatar updated successfully!');
-              setTimeout(() => this.success.set(null), 3000);
-            },
-            error: (err) => {
-              console.error('GraphQL update failed:', err);
-              this.isUploading.set(false);
-              this.error.set('Avatar uploaded but failed to update profile');
-              setTimeout(() => this.error.set(null), 3000);
-            }
-          });
-        } else {
-          console.error('Invalid response - no avatarUrl:', response);
+      try {
+        // 이미지 압축 (200x200, 60% 품질)
+        const compressedDataUrl = await this.compressImage(file, 200, 200, 0.6);
+        
+        // 최종 크기 확인 (100KB 미만 권장)
+        if (compressedDataUrl.length > 150000) {
+          this.error.set(`Image still too large after compression (${(compressedDataUrl.length / 1024).toFixed(1)}KB). Please use a smaller image.`);
           this.isUploading.set(false);
-          this.error.set(response.error || 'Upload failed');
           setTimeout(() => this.error.set(null), 3000);
+          return;
         }
-      },
-      error: (err) => {
-        console.error('Upload HTTP error:', err);
+        
+        this.avatarPreviewUrl.set(compressedDataUrl);
+        this.editAvatarUrl.set(compressedDataUrl);
         this.isUploading.set(false);
-        this.error.set('Upload failed. Make sure avatar server is running on port 3000');
+        this.success.set('Image compressed and loaded! Click Save to update.');
+        setTimeout(() => this.success.set(null), 3000);
+      } catch (err) {
+        console.error('Compression error:', err);
+        this.isUploading.set(false);
+        this.error.set('Failed to process image. Please try another file.');
         setTimeout(() => this.error.set(null), 3000);
       }
-    });
-  }
-
-  /**
-   * Cancels pending avatar upload
-   */
-  cancelUpload(): void {
-    console.log('Cancel upload');
-    this.selectedFile.set(null);
-    this.avatarPreviewUrl.set(null);
-    this.avatarRefreshKey.update(v => v + 1);
-    if (this.fileInput) {
-      this.fileInput.nativeElement.value = '';
+      
+      input.value = '';
     }
   }
 
-  /**
-   * Removes current avatar
-   */
-  removeAvatar(): void {
-    const trainer = this.trainer();
-    if (!trainer) return;
-
-    // GraphQL mutation으로 avatar_url 제거
-    this.trainerStore.updateTrainer(trainer.id, { avatarUrl: '' }).subscribe({
-      next: (updatedTrainer) => {
-        this.success.set('Avatar removed!');
-        this.avatarRefreshKey.update(v => v + 1);
-        this.trainer.set(updatedTrainer);
-        setTimeout(() => this.success.set(null), 3000);
-      },
-      error: (err) => {
-        console.error('Failed to remove avatar:', err);
-        this.error.set('Failed to remove avatar');
-        setTimeout(() => this.error.set(null), 3000);
-      }
-    });
+  cancelUpload(): void {
+    this.avatarPreviewUrl.set(null);
+    this.editAvatarUrl.set(this.originalAvatarUrl());
+    this.isUploading.set(false);
+    this.error.set(null);
   }
 
-  /**
-   * Enables edit mode
-   */
   startEdit(): void {
     const current = this.trainer();
     if (current) {
       this.editName.set(current.name);
       this.editRegion.set(current.region);
       this.editRank.set(current.rank);
+      this.editAvatarUrl.set(current.avatarUrl || '');
+      this.originalAvatarUrl.set(current.avatarUrl || '');
+      
+      if (current.avatarUrl && current.avatarUrl.startsWith('data:image/')) {
+        this.avatarPreviewUrl.set(current.avatarUrl);
+      } else {
+        this.avatarPreviewUrl.set(null);
+      }
     }
     this.isEditing.set(true);
     this.error.set(null);
     this.success.set(null);
-    console.log('Edit mode started');
   }
 
-  /**
-   * Cancels edit mode
-   */
   cancelEdit(): void {
     this.cancelUpload();
     this.isEditing.set(false);
     this.error.set(null);
-    console.log('Edit mode cancelled');
+    this.success.set(null);
   }
 
-  /**
-   * Saves profile changes (name, region, rank)
-   */
   saveProfile(): void {
     const trainer = this.trainer();
     if (!trainer) return;
@@ -352,6 +283,20 @@ export class TrainerProfileComponent implements OnInit {
     if (this.editRank() !== trainer.rank) {
       updates.rank = this.editRank();
     }
+    if (this.editAvatarUrl() !== (trainer.avatarUrl || '')) {
+      updates.avatarUrl = this.editAvatarUrl();
+      
+      // 최종 크기 확인 (100KB 미만 권장)
+      if (updates.avatarUrl && updates.avatarUrl.startsWith('data:image/')) {
+        const sizeKB = updates.avatarUrl.length / 1024;
+        console.log(`Final avatar size: ${sizeKB.toFixed(1)}KB`);
+        if (sizeKB > 150) {
+          this.error.set(`Avatar too large (${sizeKB.toFixed(1)}KB). Maximum allowed is 150KB.`);
+          this.saving.set(false);
+          return;
+        }
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       this.isEditing.set(false);
@@ -363,20 +308,30 @@ export class TrainerProfileComponent implements OnInit {
       next: (updatedTrainer) => {
         this.saving.set(false);
         this.isEditing.set(false);
+        this.avatarPreviewUrl.set(null);
+        this.originalAvatarUrl.set(updatedTrainer.avatarUrl || '');
         this.success.set('Profile updated successfully!');
         setTimeout(() => this.success.set(null), 3000);
       },
       error: (err: Error) => {
         this.saving.set(false);
-        this.error.set(err.message || 'Failed to update profile');
-        setTimeout(() => this.error.set(null), 3000);
+        console.error('Save error:', err);
+        
+        // 더 자세한 에러 메시지
+        if (err.message?.includes('500') || err.message?.includes('payload') || err.message?.includes('large')) {
+          this.error.set('Avatar too large for server. Please use a very small image (max 100KB original).');
+        } else {
+          this.error.set(err.message || 'Failed to update profile');
+        }
+        
+        this.editAvatarUrl.set(this.originalAvatarUrl());
+        this.avatarPreviewUrl.set(null);
+        
+        setTimeout(() => this.error.set(null), 5000);
       }
     });
   }
 
-  /**
-   * Gets CSS class for rank badge styling
-   */
   getRankClass(rank: string): string {
     const rankMap: Record<string, string> = {
       'Trainer': 'rank-trainer',

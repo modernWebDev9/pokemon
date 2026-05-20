@@ -1,4 +1,3 @@
-<!-- src/app/features/trainer-profile/trainer-profile.component.html -->
 <div class="profile-container">
   
   <div class="profile-header">
@@ -24,7 +23,7 @@
       <div class="avatar-wrapper">
         <div class="avatar-placeholder" [class.editable]="isEditing()" (click)="isEditing() && triggerFileUpload()">
           @if (getDisplayAvatarUrl()) {
-            <img [src]="getAvatarWithCacheBuster()" 
+            <img [src]="getDisplayAvatarUrl()" 
                  [alt]="trainer()?.name" 
                  class="avatar-img" 
                  (error)="onImageError($event)" />
@@ -38,26 +37,26 @@
         <input 
           type="file" 
           #fileInput 
-          accept="image/*"
+          accept="image/jpeg,image/png,image/gif,image/webp"
           (change)="onFileSelected($event)"
           style="display: none" />
         
         @if (isUploading()) {
           <div class="upload-progress">
             <div class="progress-spinner"></div>
-            <span>Uploading...</span>
+            <span>Converting to Base64...</span>
           </div>
         }
         
-        @if (selectedFile() && !isUploading() && isEditing()) {
+        @if (avatarPreviewUrl() && !isUploading() && isEditing()) {
           <div class="upload-actions">
-            <button class="upload-confirm" (click)="uploadAvatar()">✓ Confirm</button>
+            <button class="upload-confirm" (click)="saveProfile()">✓ Save to DB</button>
             <button class="upload-cancel" (click)="cancelUpload()">✗ Cancel</button>
           </div>
         }
         
-        @if (getDisplayAvatarUrl() && !selectedFile() && !isUploading() && isEditing() && !getDisplayAvatarUrl().startsWith('data:')) {
-          <button class="remove-avatar" (click)="removeAvatar()">🗑 Remove</button>
+        @if (trainer()?.avatarUrl && !avatarPreviewUrl() && !isUploading() && isEditing() && !trainer()?.avatarUrl?.startsWith('data:')) {
+          <button class="remove-avatar" (click)="editAvatarUrl.set(''); avatarPreviewUrl.set(null);">🗑 Remove</button>
         }
       </div>
     </div>
@@ -126,13 +125,21 @@
           </select>
         </div>
         
+        <div class="avatar-info">
+          <small>
+            💡 <strong>No server required!</strong> Images are converted to Base64 and stored directly in db.json.<br>
+            📏 Max file size: 500KB (Base64 will increase size by ~33%)<br>
+            🖼️ Supported formats: JPEG, PNG, GIF, WebP
+          </small>
+        </div>
+        
         <div class="edit-actions">
-          <button class="cancel-btn" (click)="cancelEdit()" [disabled]="saving()">
+          <button class="cancel-btn" (click)="cancelEdit()" [disabled]="saving() || isUploading()">
             Cancel
           </button>
-          <button class="save-btn" (click)="saveProfile()" [disabled]="saving()">
+          <button class="save-btn" (click)="saveProfile()" [disabled]="saving() || isUploading()">
             @if (saving()) {
-              <span>Saving...</span>
+              <span>Saving to db.json...</span>
             } @else {
               <span>Save Changes</span>
             }

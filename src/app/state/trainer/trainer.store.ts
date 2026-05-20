@@ -1,4 +1,3 @@
-// src/app/state/trainer/trainer.store.ts
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
@@ -295,16 +294,38 @@ export class TrainerStore {
 
   /**
    * Update trainer profile using PATCH
+   * Supports Base64 Data URL for avatar (no server.js needed!)
    */
   updateTrainer(id: string, updates: Partial<Omit<Trainer, 'id'>>): Observable<Trainer> {
+    console.log('=== UPDATE TRAINER (Base64 Mode) ===');
+    console.log('Trainer ID:', id);
+    console.log('Updates:', Object.keys(updates));
+    
+    // Log avatar size if present
+    if (updates.avatarUrl) {
+      const sizeKB = updates.avatarUrl.length / 1024;
+      const isBase64 = updates.avatarUrl.startsWith('data:image/');
+      console.log(`Avatar - Base64: ${isBase64}, Size: ${sizeKB.toFixed(1)}KB`);
+      
+      // Reject if too large (json-server limit ~1MB)
+      if (isBase64 && sizeKB > 800) {
+        const errorMsg = `Avatar too large (${sizeKB.toFixed(1)}KB). Maximum allowed is 800KB. Please use a smaller image.`;
+        console.error(errorMsg);
+        return throwError(() => new Error(errorMsg));
+      }
+    }
+
     const currentState = this.stateSubject.value;
-    const optimisticTrainer = { ...currentState.trainer, ...updates };
+    const optimisticTrainer = currentState.trainer ? { ...currentState.trainer, ...updates } : null;
 
-    this.stateSubject.next({
-      ...currentState,
-      trainer: optimisticTrainer as Trainer,
-    });
+    if (optimisticTrainer) {
+      this.stateSubject.next({
+        ...currentState,
+        trainer: optimisticTrainer as Trainer,
+      });
+    }
 
+    // Build payload with correct field names for json-server
     const updatePayload: any = {};
     if (updates.name !== undefined) updatePayload.name = updates.name;
     if (updates.region !== undefined) updatePayload.region = updates.region;
@@ -312,27 +333,45 @@ export class TrainerStore {
     if (updates.badgeCount !== undefined) updatePayload.badge_count = updates.badgeCount;
     if (updates.avatarUrl !== undefined) updatePayload.avatar_url = updates.avatarUrl;
 
+    // Log payload size
+    const payloadStr = JSON.stringify(updatePayload);
+    console.log(`Payload size: ${(payloadStr.length / 1024).toFixed(1)}KB`);
+
     return this.http.patch(`${this.apiUrl}/trainers/${id}`, updatePayload).pipe(
       map((updatedTrainer: any) => {
-        console.log('Trainer updated via PATCH:', updatedTrainer);
+        console.log('Trainer updated successfully via PATCH');
         return this.transformTrainer(updatedTrainer);
       }),
       tap((realTrainer: Trainer) => {
         this.stateSubject.next({
           ...this.stateSubject.value,
           trainer: realTrainer,
+          error: null,
         });
       }),
       catchError((error) => {
         console.error('Update trainer error:', error);
         
+        let errorMessage = 'Failed to update profile';
+        
+        if (error.status === 500) {
+          errorMessage = 'Server error: The avatar image may be too large. Please use a smaller image (max 300KB original).';
+        } else if (error.status === 413) {
+          errorMessage = 'Avatar image too large for the server. Please use a smaller image.';
+        } else if (error.status === 400) {
+          errorMessage = 'Invalid data sent to server. Check avatar image size.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        // Restore previous trainer state
         this.stateSubject.next({
           ...this.stateSubject.value,
           trainer: currentState.trainer,
-          error: error.message || 'Failed to update trainer',
+          error: errorMessage,
         });
         
-        return throwError(() => error);
+        return throwError(() => new Error(errorMessage));
       })
     );
   }
@@ -378,18 +417,18 @@ export class TrainerStore {
   }
 
   private transformTrainer(raw: any): Trainer {
-  console.log('Transforming raw trainer data:', raw);
-  const transformed = {
-    id: String(raw.id),
-    name: raw.name || 'Unknown Trainer',
-    badgeCount: raw.badge_count || 0,
-    region: raw.region || 'Kanto',
-    avatarUrl: raw.avatar_url || '',  
-    rank: raw.rank || 'Trainer',
-  };
-  console.log('Transformed trainer:', transformed);
-  return transformed;
-}
+    console.log('Transforming raw trainer data:', raw);
+    const transformed = {
+      id: String(raw.id),
+      name: raw.name || 'Unknown Trainer',
+      badgeCount: raw.badge_count || 0,
+      region: raw.region || 'Kanto',
+      avatarUrl: raw.avatar_url || '',
+      rank: raw.rank || 'Trainer',
+    };
+    console.log('Transformed trainer - Avatar length:', transformed.avatarUrl.length);
+    return transformed;
+  }
 
   private transformTeam(raw: any): Team {
     return {
