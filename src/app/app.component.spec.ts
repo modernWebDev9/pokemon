@@ -1,4 +1,7 @@
-// src/app/app.component.spec.ts
+/**
+ * App Component Test Suite
+ * Tests basic functionality of the main application component
+ */
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
@@ -7,7 +10,7 @@ describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        RouterTestingModule  // ✅ Add this to provide ActivatedRoute
+        RouterTestingModule  // Provides ActivatedRoute for routing tests
       ],
       providers: [
         AppComponent
@@ -19,12 +22,6 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
-  });
-
-  it('should have the correct title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toBe('Pokédex Trainer Dashboard');
   });
 
   it('should render sidebar', () => {

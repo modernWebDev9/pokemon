@@ -1,10 +1,16 @@
-// src/app/state/pokemon/pokemon.store.ts
+/**
+ * Pokemon Store - BehaviorSubject-based state management for Pokémon data
+ * Handles caching, API calls, and state updates for the Pokédex feature
+ */
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError, timer } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { map, catchError, retry, tap, shareReplay } from 'rxjs/operators';
 import { Apollo } from 'apollo-angular';
 import { GET_POKEMON_LIST, GET_POKEMON_DETAIL } from '../../core/graphql/pokemon.queries';
 
+/**
+ * Represents a Pokémon's base stats
+ */
 export interface PokemonStats {
   hp: number;
   attack: number;
@@ -14,11 +20,17 @@ export interface PokemonStats {
   speed: number;
 }
 
+/**
+ * Represents a Pokémon's sprite images
+ */
 export interface PokemonSprites {
   front_default: string;
   front_shiny: string;
 }
 
+/**
+ * Represents a complete Pokémon entity
+ */
 export interface Pokemon {
   id: number;
   name: string;
@@ -29,6 +41,9 @@ export interface Pokemon {
   sprites: PokemonSprites;
 }
 
+/**
+ * State interface for Pokémon store
+ */
 export interface PokemonState {
   list: Pokemon[];
   totalCount: number;
@@ -37,6 +52,9 @@ export interface PokemonState {
   cache: Map<number, Pokemon>;
 }
 
+/**
+ * Initial state for Pokémon store
+ */
 const INITIAL_STATE: PokemonState = {
   list: [],
   totalCount: 0,
@@ -52,17 +70,33 @@ export class PokemonStore {
   private stateSubject = new BehaviorSubject<PokemonState>(INITIAL_STATE);
   public state$ = this.stateSubject.asObservable();
   
+  /**
+   * Observable stream of Pokémon list
+   * Uses shareReplay(1) to cache the latest value for multiple subscribers
+   */
   public readonly pokemonList$ = this.state$.pipe(
     map(state => state.list),
     shareReplay(1)
   );
   
+  /**
+   * Observable stream of loading state
+   */
   public readonly loading$ = this.state$.pipe(map(state => state.loading));
+  
+  /**
+   * Observable stream of error state
+   */
   public readonly error$ = this.state$.pipe(map(state => state.error));
+  
+  /**
+   * Observable stream of total Pokémon count
+   */
   public readonly totalCount$ = this.state$.pipe(map(state => state.totalCount));
 
   /**
    * Fetches paginated Pokémon list from PokeAPI GraphQL endpoint
+   * Results are cached in the store to avoid redundant network calls
    *
    * @param limit - Number of Pokémon to fetch per page (default: 20)
    * @param offset - Starting index for pagination (default: 0)
@@ -82,6 +116,7 @@ export class PokemonStore {
       variables: { limit, offset },
       fetchPolicy: 'network-only',
     }).pipe(
+      retry(3), // Retry failed API calls up to 3 times
       map((result: any) => {
         console.log('API Response received: ' + result.data?.pokemon_v2_pokemon?.length + ' pokémon');
         
@@ -134,6 +169,7 @@ export class PokemonStore {
       query: GET_POKEMON_DETAIL,
       variables: { id },
     }).pipe(
+      retry(3), // Retry failed API calls up to 3 times
       map((result: any) => {
         const rawPokemon = result.data?.pokemon_v2_pokemon?.[0];
         if (!rawPokemon) {
@@ -195,6 +231,7 @@ export class PokemonStore {
 
   /**
    * Extracts and parses stats from API response
+   * Maps API stat names to our internal stat model
    *
    * @param stats - Raw stats array from API
    * @returns Parsed PokemonStats object
@@ -226,6 +263,7 @@ export class PokemonStore {
 
   /**
    * Extracts and parses sprites from API response
+   * Handles both JSON string and object formats
    *
    * @param spritesJson - Raw sprites JSON string or object
    * @returns Parsed PokemonSprites object
@@ -258,6 +296,7 @@ export class PokemonStore {
 
   /**
    * Clears all cached Pokémon data
+   * Useful for testing or when cache needs to be refreshed
    */
   clearCache(): void {
     this.stateSubject.next({

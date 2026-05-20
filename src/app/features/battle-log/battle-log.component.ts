@@ -1,4 +1,7 @@
-// src/app/features/battle-log/battle-log.component.ts
+/**
+ * Battle Log Component - Real-time battle log feed with polling simulation
+ * Displays battle logs grouped by date with severity filtering and auto-scroll
+ */
 import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,12 +24,14 @@ export class BattleLogComponent implements OnInit, OnDestroy {
   
   private pollingSubscription: Subscription | null = null;
   
+  // State signals
   battleLogs = signal<BattleLogEntry[]>([]);
   allBattles = signal<Battle[]>([]);
   selectedSeverity = signal<string>('all');
   loading = signal(true);
   autoScroll = signal(true);
   
+  // UI configuration
   severityOptions = [
     { value: 'all', label: 'All', icon: '📋' },
     { value: 'info', label: 'Info', icon: 'ℹ️', color: '#3498db' },
@@ -42,6 +47,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     danger: '❌'
   };
   
+  /**
+   * Computed signal for filtered battle logs by severity
+   */
   filteredLogs = computed(() => {
     const logs = this.battleLogs();
     const severity = this.selectedSeverity();
@@ -50,6 +58,10 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return logs.filter(log => log.severity === severity);
   });
   
+  /**
+   * Computed signal for logs grouped by date
+   * Groups logs by their date and sorts groups by date descending
+   */
   groupedLogs = computed(() => {
     const logs = this.filteredLogs();
     const groups: { date: string; logs: BattleLogEntry[] }[] = [];
@@ -70,6 +82,10 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return groups.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
   
+  /**
+   * Computed signal for monthly battle statistics
+   * Aggregates wins and losses by month for chart visualization
+   */
   monthlyBattleData = computed<MonthlyBattleData[]>(() => {
     const battles = this.allBattles();
     console.log('Computing monthly data from battles:', battles.length);
@@ -103,6 +119,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     }));
   });
   
+  /**
+   * Computed signal for total battle summary
+   */
   totalBattlesSummary = computed(() => {
     const data = this.monthlyBattleData();
     const totalWins = data.reduce((sum, d) => sum + d.wins, 0);
@@ -110,6 +129,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return { totalWins, totalLosses, total: totalWins + totalLosses };
   });
   
+  /**
+   * Computed signal for win rate percentage
+   */
   winRate = computed(() => {
     const battles = this.allBattles();
     if (battles.length === 0) return 0;
@@ -117,6 +139,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return Math.round((wins / battles.length) * 100);
   });
   
+  /**
+   * Computed signal for battle statistics
+   */
   battleStats = computed(() => {
     const battles = this.allBattles();
     const wins = battles.filter(b => b.result === 'win').length;
@@ -128,11 +153,19 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return { wins, losses, total, winRate: this.winRate() };
   });
   
+  /**
+   * Initializes component by loading data and starting polling
+   */
   ngOnInit(): void {
     console.log('BattleLogComponent initialized');
     this.loadInitialLogs();
     this.loadBattles();
     
+    // Subscribe to polling service for real-time updates
+    // Polling is used instead of WebSocket subscriptions because:
+    // 1. The mock server doesn't support WebSocket subscriptions
+    // 2. Polling is simpler to implement and debug
+    // 3. For a real application, WebSocket would be preferred for true real-time updates
     this.pollingSubscription = this.battlePolling.subscribeToBattleLogs((newLogs: BattleLogEntry[]) => {
       console.log('New battle logs received:', newLogs.length);
       this.battleLogs.update(logs => [...newLogs, ...logs]);
@@ -143,6 +176,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Cleans up subscriptions and stops polling
+   */
   ngOnDestroy(): void {
     if (this.pollingSubscription) {
       this.pollingSubscription.unsubscribe();
@@ -150,6 +186,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     this.battlePolling.stopPolling();
   }
   
+  /**
+   * Loads initial battle logs from the polling service
+   */
   private loadInitialLogs(): void {
     this.loading.set(true);
     console.log('Loading initial battle logs...');
@@ -170,6 +209,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Loads battle data from the trainer store
+   */
   private loadBattles(): void {
     console.log('Subscribing to battles$...');
     this.trainerStore.battles$.subscribe((battles: Battle[]) => {
@@ -179,23 +221,40 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Sets severity filter for battle logs
+   *
+   * @param severity - Severity level to filter by
+   */
   setSeverityFilter(severity: string): void {
     this.selectedSeverity.set(severity);
   }
   
+  /**
+   * Clears all battle logs
+   */
   clearLogs(): void {
     this.battleLogs.set([]);
   }
   
+  /**
+   * Refreshes battle logs by resetting polling timestamp
+   */
   refreshLogs(): void {
     this.battlePolling.resetLastTimestamp();
     this.loadInitialLogs();
   }
   
+  /**
+   * Toggles auto-scroll behavior
+   */
   toggleAutoScroll(): void {
     this.autoScroll.update(val => !val);
   }
   
+  /**
+   * Scrolls log container to top
+   */
   private scrollToTop(): void {
     const container = document.querySelector('.log-container');
     if (container) {
@@ -203,6 +262,12 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     }
   }
   
+  /**
+   * Converts timestamp to relative time string
+   *
+   * @param timestamp - ISO timestamp string
+   * @returns Relative time string (e.g., "2 hours ago")
+   */
   getRelativeTime(timestamp: string): string {
     const date = new Date(timestamp);
     const now = new Date();
@@ -217,6 +282,12 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   }
   
+  /**
+   * Gets CSS class for severity level
+   *
+   * @param severity - Severity level
+   * @returns CSS class string
+   */
   getSeverityClass(severity: string): string {
     return `log-entry severity-${severity}`;
   }

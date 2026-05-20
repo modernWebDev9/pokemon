@@ -1,4 +1,7 @@
-// src/app/features/pokedex/pokedex-table/pokedex-table.component.ts
+/**
+ * Pokedex Table Component - Displays Pokémon in a sortable, filterable table
+ * Implements client-side pagination, filtering, and sorting with Angular Signals
+ */
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -31,33 +34,42 @@ export class PokedexTableComponent implements OnInit {
   allPokemon = signal<Pokemon[]>([]);
   selectedPokemon = signal<Pokemon | null>(null);
   
-  // Computed - available types
+  /**
+   * Computed signal for available Pokémon types
+   * Extracts unique types from all Pokémon
+   */
   availableTypes = computed(() => {
     const types = new Set<string>();
     this.allPokemon().forEach(p => p.types.forEach(t => types.add(t)));
     return Array.from(types).sort();
   });
   
-  // Computed - filtered and sorted pokemon
+  /**
+   * Computed signal for filtered and sorted Pokémon
+   * Applies search, type filter, stats range, and sorting
+   */
   filteredPokemon = computed(() => {
     let results = [...this.allPokemon()];
     const search = this.searchTerm().toLowerCase();
     const type = this.selectedType();
     
+    // Apply text search filter (minimum 2 characters)
     if (search.length >= 2) {
       results = results.filter(p => p.name.toLowerCase().includes(search));
     }
     
+    // Apply type filter
     if (type) {
       results = results.filter(p => p.types.includes(type));
     }
     
+    // Apply total stats range filter
     results = results.filter(p => {
       const total = this.calculateTotalStats(p);
       return total >= this.minStats() && total <= this.maxStats();
     });
     
-    // Sort with proper type handling
+    // Apply sorting
     results.sort((a, b) => {
       const sortBy = this.sortBy();
       const sortDir = this.sortDir();
@@ -101,15 +113,23 @@ export class PokedexTableComponent implements OnInit {
     return results;
   });
   
-  // Computed - total pages
+  /**
+   * Computed signal for total number of pages
+   */
   totalPages = computed(() => Math.ceil(this.filteredPokemon().length / this.pageSize()));
   
-  // Computed - paginated pokemon
+  /**
+   * Computed signal for paginated Pokémon
+   * Slices filtered results based on current page and page size
+   */
   paginatedPokemon = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
     return this.filteredPokemon().slice(start, start + this.pageSize());
   });
   
+  /**
+   * Initializes component by loading Pokémon data
+   */
   ngOnInit(): void {
     this.pokemonStore.fetchPokemonList(151, 0).subscribe({
       next: (pokemon) => {
@@ -123,27 +143,51 @@ export class PokedexTableComponent implements OnInit {
     });
   }
   
+  /**
+   * Calculates total base stats for a Pokémon
+   *
+   * @param pokemon - Pokémon entity
+   * @returns Sum of all base stats
+   */
   calculateTotalStats(pokemon: Pokemon): number {
     return pokemon.stats.hp + pokemon.stats.attack + pokemon.stats.defense +
            pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
   }
   
+  /**
+   * Handles search term change and resets to first page
+   */
   onSearchChange(): void {
     this.currentPage.set(1);
   }
   
+  /**
+   * Handles type filter change and resets to first page
+   */
   onTypeChange(): void {
     this.currentPage.set(1);
   }
   
+  /**
+   * Handles stats range change and resets to first page
+   */
   onStatsChange(): void {
     this.currentPage.set(1);
   }
   
+  /**
+   * Handles page size change and resets to first page
+   */
   onPageSizeChange(): void {
     this.currentPage.set(1);
   }
   
+  /**
+   * Sorts table by column
+   * Toggles direction if same column, sets to ascending if new column
+   *
+   * @param column - Column name to sort by
+   */
   sort(column: string): void {
     if (this.sortBy() === column) {
       this.sortDir.update(dir => dir === 'asc' ? 'desc' : 'asc');
@@ -153,26 +197,45 @@ export class PokedexTableComponent implements OnInit {
     }
   }
   
+  /**
+   * Navigates to previous page
+   */
   previousPage(): void {
     if (this.currentPage() > 1) {
       this.currentPage.update(page => page - 1);
     }
   }
   
+  /**
+   * Navigates to next page
+   */
   nextPage(): void {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update(page => page + 1);
     }
   }
   
+  /**
+   * Handles Pokémon row click to show detail panel
+   *
+   * @param pokemon - Selected Pokémon
+   */
   onPokemonClick(pokemon: Pokemon): void {
     this.selectedPokemon.set(pokemon);
   }
   
+  /**
+   * Closes Pokémon detail panel
+   */
   closeDetailPanel(): void {
     this.selectedPokemon.set(null);
   }
   
+  /**
+   * Handles image loading errors by setting fallback sprite
+   *
+   * @param event - Image error event
+   */
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';

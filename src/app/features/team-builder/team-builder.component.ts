@@ -1,4 +1,7 @@
-// src/app/features/team-builder/team-builder.component.ts
+/**
+ * Team Builder Component - Advanced form for creating and managing Pokémon teams
+ * Implements autocomplete search, type coverage analysis, and optimistic updates
+ */
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,31 +26,34 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   
   private subscriptions: Subscription[] = [];
   
-  // Form state
+  // Form state signals
   teamName = signal('');
   selectedPokemonIds = signal<number[]>([]);
   competitiveMode = signal(false);
   selectedTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>(null);
   
-  // UI state
+  // UI state signals
   loading = signal(true);
   submitting = signal(false);
   error = signal<string | null>(null);
   showSuccess = signal(false);
   
-  // Search autocomplete
+  // Search autocomplete signals
   searchTerm = signal('');
   showDropdown = signal(false);
   
-  // Edit dialog
+  // Edit dialog signals
   editingTeam = signal<Team | null>(null);
   showEditDialog = signal(false);
   
-  // Data from stores
+  // Data signals from stores
   teams = signal<Team[]>([]);
   allPokemon = signal<Pokemon[]>([]);
   
-  // Computed - available Pokémon for selection
+  /**
+   * Computed signal for available Pokémon for selection
+   * Filters out already selected Pokémon and enforces 6 Pokémon limit
+   */
   availablePokemon = computed(() => {
     const selectedIds = this.selectedPokemonIds();
     if (selectedIds.length >= 6) return [];
@@ -55,7 +61,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     return this.allPokemon().filter(p => !selectedIds.includes(p.id));
   });
   
-  // Computed - filtered search results
+  /**
+   * Computed signal for filtered search results
+   * Shows top 10 matches for autocomplete dropdown
+   */
   searchResults = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
     if (term.length < 2) return [];
@@ -65,7 +74,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       .slice(0, 10);
   });
   
-  // Computed - selected Pokémon details
+  /**
+   * Computed signal for selected Pokémon details
+   * Maps selected IDs to full Pokémon objects
+   */
   selectedPokemonDetails = computed(() => {
     const ids = this.selectedPokemonIds();
     return ids
@@ -73,13 +85,19 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       .filter(p => p !== undefined);
   });
   
-  // Computed - team name validation
+  /**
+   * Computed signal for team name validation
+   * Validates length between 3 and 30 characters
+   */
   isTeamNameValid = computed(() => {
     const name = this.teamName().trim();
     return name.length >= 3 && name.length <= 30;
   });
   
-  // Computed - can submit form
+  /**
+   * Computed signal for form submission eligibility
+   * Checks all validation rules and submission state
+   */
   canSubmit = computed(() => {
     return this.isTeamNameValid() && 
            this.selectedPokemonIds().length >= 1 && 
@@ -87,7 +105,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
            !this.submitting();
   });
   
-  // Computed - type coverage analysis
+  /**
+   * Computed signal for type coverage analysis
+   * Analyzes team type diversity and provides feedback
+   */
   typeCoverage = computed(() => {
     const pokemons = this.selectedPokemonDetails();
     const types = new Set<string>();
@@ -101,7 +122,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     };
   });
   
-  // Computed - type distribution for chart
+  /**
+   * Computed signal for type distribution data for chart
+   * Transforms team composition into chart-friendly format
+   */
   typeDistribution = computed<TypeData[]>(() => {
     const pokemons = this.selectedPokemonDetails();
     if (pokemons.length === 0) return [];
@@ -124,6 +148,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.count - a.count);
   });
   
+  /**
+   * Initializes component by loading data and setting up subscriptions
+   */
   ngOnInit(): void {
     // Load teams from store
     this.subscriptions.push(
@@ -165,12 +192,18 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     this.trainerStore.setCurrentTrainer('1');
   }
   
+  /**
+   * Cleans up subscriptions to prevent memory leaks
+   */
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
   
   /**
-   * Add Pokémon to team selection
+   * Adds Pokémon to team selection
+   * Enforces 6 Pokémon maximum limit
+   *
+   * @param pokemon - Pokémon to add
    */
   addPokemon(pokemon: Pokemon): void {
     if (this.selectedPokemonIds().length >= 6) return;
@@ -181,21 +214,25 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Remove Pokémon from team
+   * Removes Pokémon from team selection
+   *
+   * @param pokemonId - Pokémon ID to remove
    */
   removePokemon(pokemonId: number): void {
     this.selectedPokemonIds.update(ids => ids.filter(id => id !== pokemonId));
   }
   
   /**
-   * Handle search input change
+   * Handles search input change
+   * Shows dropdown when search term has at least 2 characters
    */
   onSearchChange(): void {
     this.showDropdown.set(this.searchTerm().length >= 2);
   }
   
   /**
-   * Create new team with optimistic update
+   * Creates new team with optimistic UI updates
+   * Shows success message and resets form on success
    */
   createTeam(): void {
     if (!this.canSubmit()) return;
@@ -231,7 +268,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Open edit dialog for a team
+   * Opens edit dialog for a team
+   *
+   * @param team - Team to edit
    */
   editTeam(team: Team): void {
     this.editingTeam.set(team);
@@ -239,7 +278,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Update team with optimistic update
+   * Updates team with optimistic UI updates
+   *
+   * @param id - Team ID to update
+   * @param updates - Partial team data to update
    */
   updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId' | 'pokemonIds'>>): void {
     this.trainerStore.updateTeam(id, updates).subscribe({
@@ -256,7 +298,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Delete a team
+   * Deletes a team with confirmation dialog
+   *
+   * @param id - Team ID to delete
    */
   deleteTeam(id: string): void {
     if (confirm('Are you sure you want to delete this team?')) {
