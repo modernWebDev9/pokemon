@@ -2,7 +2,7 @@
  * Team Builder Component - Advanced form for creating and managing Pokémon teams
  * Implements autocomplete search, type coverage analysis, and optimistic updates
  */
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrainerStore, Team } from '../../state/trainer/trainer.store';
@@ -23,6 +23,9 @@ import { Subscription } from 'rxjs';
 export class TeamBuilderComponent implements OnInit, OnDestroy {
   private trainerStore = inject(TrainerStore);
   private pokemonStore = inject(PokemonStore);
+  private elementRef = inject(ElementRef);
+  
+  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   
   private subscriptions: Subscription[] = [];
   
@@ -49,6 +52,19 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   // Data signals from stores
   teams = signal<Team[]>([]);
   allPokemon = signal<Pokemon[]>([]);
+  
+  /**
+   * Host listener to close dropdown when clicking outside
+   */
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const searchContainer = this.elementRef.nativeElement.querySelector('.search-container');
+    
+    if (searchContainer && !searchContainer.contains(target)) {
+      this.showDropdown.set(false);
+    }
+  }
   
   /**
    * Computed signal for available Pokémon for selection
@@ -251,6 +267,13 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     if (this.searchTerm().length === 0 && this.availablePokemon().length > 0) {
       this.showDropdown.set(true);
     }
+  }
+  
+  /**
+   * Prevents dropdown from closing when clicking inside the search container
+   */
+  onSearchContainerClick(event: MouseEvent): void {
+    event.stopPropagation();
   }
   
   /**
