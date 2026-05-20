@@ -86,7 +86,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 800px; /* Fixed height that accommodates chart */
+  height: 800px;
   overflow-y: auto;
   
   &::-webkit-scrollbar {
@@ -145,7 +145,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 800px; /* Same fixed height as form card */
+  height: 800px;
   
   &:hover {
     transform: translateY(-2px);
@@ -172,7 +172,7 @@
   }
 }
 
-/* Teams Scroll Container - Fills remaining space */
+/* Teams Scroll Container */
 .teams-scroll {
   flex: 1;
   overflow-y: auto;
@@ -472,6 +472,38 @@ select.form-input option {
   margin-left: 16px;
 }
 
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 60px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Visual Separator */
+.form-separator {
+  height: 1px;
+  background: var(--border-light, rgba(255, 255, 255, 0.08));
+  margin: 8px 0 24px 0;
+}
+
 /* Selected Pokémon Chips */
 .selected-pokemon {
   margin-bottom: 24px;
@@ -606,34 +638,6 @@ select.form-input option {
   font-size: 0.7rem;
   color: var(--text-tertiary, #6b6b6b);
   margin-top: 12px;
-}
-
-/* Submit Button */
-.submit-btn {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border: none;
-  border-radius: 60px;
-  font-weight: 700;
-  font-size: 1rem;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
 /* ============================================
@@ -797,6 +801,10 @@ select.form-input option {
   .form-card::-webkit-scrollbar-track,
   .teams-list::-webkit-scrollbar-track,
   .teams-scroll::-webkit-scrollbar-track {
+    background: #e0e0e0;
+  }
+  
+  .form-separator {
     background: #e0e0e0;
   }
   

@@ -94,6 +94,21 @@
           </div>
         </div>
         
+        <!-- Submit Button - Below search -->
+        <button 
+          class="submit-btn"
+          [disabled]="!canSubmit()"
+          (click)="createTeam()">
+          @if (submitting()) {
+            <span>Creating...</span>
+          } @else {
+            <span>Create Team</span>
+          }
+        </button>
+        
+        <!-- Visual Separator -->
+        <div class="form-separator"></div>
+        
         <!-- Selected Pokémon Chips -->
         @if (selectedPokemonDetails().length > 0) {
           <div class="selected-pokemon">
@@ -156,18 +171,6 @@
             </div>
           </div>
         }
-        
-        <!-- Submit Button -->
-        <button 
-          class="submit-btn"
-          [disabled]="!canSubmit()"
-          (click)="createTeam()">
-          @if (submitting()) {
-            <span>Creating...</span>
-          } @else {
-            <span>Create Team</span>
-          }
-        </button>
         
       </div>
     </div>
