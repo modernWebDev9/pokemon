@@ -56,6 +56,25 @@
 - **Styling**: SCSS with CSS Variables
 - **Testing**: Jasmine, Karma
 
+
+## Key Technical Decision Summary
+
+### Why `db.json` (not `db.js`)?
+
+| Requirement | How `db.json` fulfills it |
+|-------------|---------------------------|
+| **Battle Log Polling** | `interval(5000) + switchMap` works perfectly with REST |
+| **Avatar Base64 Storage** | Stable up to 2MB, no 500 errors |
+| **CRUD Operations** | Full REST support (GET/POST/PATCH/DELETE) |
+| **Development Speed** | Zero configuration, immediate start |
+| **Deployment** | Single file, no extra setup |
+
+### Why Not GraphQL?
+
+1. Assignment requires **polling simulation**, not GraphQL subscriptions
+2. `json-server` is stable for Base64 images; `json-graphql-server` returns 500 errors
+3. REST is simpler, faster to implement, meets all requirements
+
 ## 📦 Installation
 
 ```bash
