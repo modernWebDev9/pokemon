@@ -1,4 +1,3 @@
-<!-- src/app/features/pokedex/pokemon-detail/pokemon-detail.component.html -->
 <div class="detail-overlay" (click)="onClose()">
   <div class="detail-panel" (click)="$event.stopPropagation()">
     
@@ -12,25 +11,46 @@
     
     <div class="detail-content" *ngIf="pokemon() as p">
       
-      <div class="pokemon-sprite-section">
-        <img 
-          [src]="p.sprites.front_default" 
-          [alt]="p.name"
-          class="pokemon-artwork"
-          (error)="onImageError($event)" />
-        <button class="audio-btn" (click)="playAudio()" [class.playing]="isPlaying()">
-          🔊 Play Cry
-        </button>
+      <!-- Top Section: Sprite + Audio + Types - Horizontal Layout -->
+      <div class="top-info-section">
+        
+        <!-- Sprite Image - Fixed Size -->
+        <div class="pokemon-sprite-wrapper">
+          <img 
+            [src]="p.sprites.front_default" 
+            [alt]="p.name"
+            class="pokemon-artwork"
+            (error)="onImageError($event)" />
+        </div>
+        
+        <!-- Right Panel: Audio Button + Types -->
+        <div class="info-panel">
+          <button class="audio-btn" (click)="playAudio()" [class.playing]="isPlaying()">
+            <span class="audio-icon">🔊</span>
+            <span class="audio-text">Play Cry</span>
+          </button>
+          
+          <div class="types-section">
+            <span class="section-label">Types</span>
+            <div class="type-badges">
+              <span *ngFor="let type of p.types" class="type-badge" [class]="'type-' + type.toLowerCase()">
+                {{ type }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
       </div>
       
+      <!-- Info Grid - Height, Weight, Total Stats -->
       <div class="info-grid">
         <div class="info-card">
           <h4>Height</h4>
-          <p>{{ p.height }} m</p>
+          <p>{{ p.height / 10 }} m</p>
         </div>
         <div class="info-card">
           <h4>Weight</h4>
-          <p>{{ p.weight }} kg</p>
+          <p>{{ p.weight / 10 }} kg</p>
         </div>
         <div class="info-card">
           <h4>Total Stats</h4>
@@ -38,21 +58,15 @@
         </div>
       </div>
       
-      <div class="types-section">
-        <h4>Types</h4>
-        <div class="type-badges">
-          <span *ngFor="let type of p.types" class="type-badge" [class]="'type-' + type.toLowerCase()">
-            {{ type }}
-          </span>
+      <!-- Stats Radar Chart - Full Width, Aligned with other sections -->
+      <div class="chart-section">
+        <h4>Stats Radar Chart</h4>
+        <div class="chart-container-full">
+          <app-stats-chart [pokemon]="pokemon()" />
         </div>
       </div>
       
-      <!-- Stats Radar Chart -->
-      <div class="chart-section">
-        <h4>Stats Radar Chart</h4>
-        <app-stats-chart [pokemon]="pokemon()" />
-      </div>
-      
+      <!-- Base Stats Bars -->
       <div class="stats-section">
         <h4>Base Stats</h4>
         <div class="stat-bar" *ngFor="let stat of getStatList()">
@@ -68,6 +82,7 @@
         </div>
       </div>
       
+      <!-- Video Section -->
       <div class="video-section">
         <h4>Pokémon Video</h4>
         <div class="video-container">

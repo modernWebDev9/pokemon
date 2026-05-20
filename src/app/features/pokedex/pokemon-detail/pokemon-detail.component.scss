@@ -1,5 +1,3 @@
-// src/app/features/pokedex/pokemon-detail/pokemon-detail.component.scss
-
 /* ============================================
    Detail Overlay
    ============================================ */
@@ -20,7 +18,7 @@
    Detail Panel
    ============================================ */
 .detail-panel {
-  width: 520px;
+  width: 600px;
   max-width: 90vw;
   height: 100vh;
   background: var(--bg-card, #1a1a1a);
@@ -76,6 +74,7 @@
     margin: 0;
     font-size: 28px;
     font-weight: 700;
+    text-transform: capitalize;
   }
   
   .pokemon-id {
@@ -91,19 +90,42 @@
   padding: 24px;
 }
 
-/* Sprite Section */
-.pokemon-sprite-section {
-  text-align: center;
-  padding: 24px;
+/* ============================================
+   Top Info Section - Horizontal Layout
+   ============================================ */
+.top-info-section {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 32px;
+  padding: 20px;
   background: var(--bg-secondary, #0f0f0f);
   border-radius: 24px;
-  margin-bottom: 24px;
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  flex-wrap: wrap;
+}
+
+/* Sprite Wrapper - Fixed Size */
+.pokemon-sprite-wrapper {
+  flex-shrink: 0;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+  }
 }
 
 .pokemon-artwork {
-  width: 180px;
-  height: 180px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
   transition: transform 0.2s;
   
@@ -112,19 +134,40 @@
   }
 }
 
+/* Info Panel - Audio + Types */
+.info-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .audio-btn {
-  margin-top: 16px;
-  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
   border-radius: 40px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1rem;
   transition: all 0.2s;
+  width: fit-content;
+  
+  .audio-icon {
+    font-size: 1.2rem;
+  }
+  
+  .audio-text {
+    font-size: 0.9rem;
+  }
   
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
   
@@ -133,12 +176,50 @@
   }
 }
 
-/* Info Grid */
+.types-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0a0);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.type-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.type-badge {
+  padding: 6px 18px;
+  border-radius: 40px;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ============================================
+   Info Grid
+   ============================================ */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .info-card {
@@ -175,39 +256,37 @@
   }
 }
 
-/* Types Section */
-.types-section {
-  margin-bottom: 24px;
+/* ============================================
+   Chart Section - Full Width
+   ============================================ */
+.chart-section {
+  margin-bottom: 28px;
   
   h4 {
     color: var(--text-secondary, #a0a0a0);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
 }
 
-.type-badges {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.chart-container-full {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  
+  app-stats-chart {
+    display: block;
+    width: 100%;
+  }
 }
 
-.type-badge {
-  padding: 6px 18px;
-  border-radius: 40px;
-  font-size: 13px;
-  font-weight: 700;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Stats Section */
+/* ============================================
+   Stats Section
+   ============================================ */
 .stats-section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   
   h4 {
     color: var(--text-secondary, #a0a0a0);
@@ -268,20 +347,9 @@
   }
 }
 
-/* Chart Section */
-.chart-section {
-  margin-bottom: 24px;
-  
-  h4 {
-    color: var(--text-secondary, #a0a0a0);
-    margin-bottom: 12px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-}
-
-/* Video Section */
+/* ============================================
+   Video Section
+   ============================================ */
 .video-section {
   margin-bottom: 24px;
   
@@ -332,7 +400,9 @@
   }
 }
 
-/* Animations */
+/* ============================================
+   Animations
+   ============================================ */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
@@ -372,17 +442,46 @@
     padding: 20px;
   }
   
+  .top-info-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .pokemon-sprite-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .pokemon-artwork {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .info-panel {
+    align-items: center;
+    width: 100%;
+  }
+  
+  .audio-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .types-section {
+    align-items: center;
+    width: 100%;
+  }
+  
+  .type-badges {
+    justify-content: center;
+  }
+  
   .info-grid {
     gap: 12px;
   }
   
   .info-card p {
     font-size: 16px;
-  }
-  
-  .pokemon-artwork {
-    width: 140px;
-    height: 140px;
   }
 }
 
@@ -394,7 +493,7 @@
     background: #ffffff;
   }
   
-  .pokemon-sprite-section {
+  .top-info-section {
     background: #f8f9fa;
   }
   
@@ -411,7 +510,7 @@
   }
   
   .stats-section h4,
-  .types-section h4,
+  .types-section .section-label,
   .chart-section h4,
   .video-section h4 {
     color: #666;
