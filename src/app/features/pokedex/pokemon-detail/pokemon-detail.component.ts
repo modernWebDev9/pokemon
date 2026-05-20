@@ -1,4 +1,3 @@
-// src/app/features/pokedex/pokemon-detail/pokemon-detail.component.ts
 import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -29,45 +28,43 @@ export class PokemonDetailComponent {
   isPlaying = signal<boolean>(false);
   private audioElement: HTMLAudioElement | null = null;
   
-  // Expanded video mapping for more Pokémon
+  /**
+   * Format decimal numbers to 2 decimal places
+   * Handles infinite decimals and floating point precision issues
+   */
+  formatDecimal(value: number): string {
+    if (value === undefined || value === null) return '0';
+    // Round to 2 decimal places and ensure proper formatting
+    return value.toFixed(2);
+  }
+  
+  // Video mapping for Pokémon
   private readonly videoMap: Record<number, string> = {
-    // Kanto Starters
-    1: 'https://www.youtube.com/embed/6jzZ3CqN9Zs',    // Bulbasaur
-    4: 'https://www.youtube.com/embed/gxEPV4kolz0',    // Charmander
-    7: 'https://www.youtube.com/embed/9P6i6RZsBSc',    // Squirtle
-    
-    // Popular Pokémon
-    25: 'https://www.youtube.com/embed/1HRa4X07jdE',   // Pikachu
-    6: 'https://www.youtube.com/embed/gxEPV4kolz0',    // Charizard
-    9: 'https://www.youtube.com/embed/9P6i6RZsBSc',    // Blastoise
-    3: 'https://www.youtube.com/embed/6jzZ3CqN9Zs',    // Venusaur
-    
-    // Legendary Birds
-    144: 'https://www.youtube.com/embed/3GJOVPjhXMY',  // Articuno
-    145: 'https://www.youtube.com/embed/3GJOVPjhXMY',  // Zapdos
-    146: 'https://www.youtube.com/embed/3GJOVPjhXMY',  // Moltres
-    
-    // Legendary
-    150: 'https://www.youtube.com/embed/5Tk5L4rYk9A',  // Mewtwo
-    151: 'https://www.youtube.com/embed/6lFjGvQVqA0',  // Mew
-    
-    // Dragonite line
-    147: 'https://www.youtube.com/embed/4w9EksW5wz8',  // Dratini
-    148: 'https://www.youtube.com/embed/4w9EksW5wz8',  // Dragonair
-    149: 'https://www.youtube.com/embed/4w9EksW5wz8',  // Dragonite
-    
-    // Eevee line
-    133: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',  // Eevee
-    134: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',  // Vaporeon
-    135: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',  // Jolteon
-    136: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',  // Flareon
+    1: 'https://www.youtube.com/embed/6jzZ3CqN9Zs',
+    4: 'https://www.youtube.com/embed/gxEPV4kolz0',
+    7: 'https://www.youtube.com/embed/9P6i6RZsBSc',
+    25: 'https://www.youtube.com/embed/1HRa4X07jdE',
+    6: 'https://www.youtube.com/embed/gxEPV4kolz0',
+    9: 'https://www.youtube.com/embed/9P6i6RZsBSc',
+    3: 'https://www.youtube.com/embed/6jzZ3CqN9Zs',
+    144: 'https://www.youtube.com/embed/3GJOVPjhXMY',
+    145: 'https://www.youtube.com/embed/3GJOVPjhXMY',
+    146: 'https://www.youtube.com/embed/3GJOVPjhXMY',
+    150: 'https://www.youtube.com/embed/5Tk5L4rYk9A',
+    151: 'https://www.youtube.com/embed/6lFjGvQVqA0',
+    147: 'https://www.youtube.com/embed/4w9EksW5wz8',
+    148: 'https://www.youtube.com/embed/4w9EksW5wz8',
+    149: 'https://www.youtube.com/embed/4w9EksW5wz8',
+    133: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',
+    134: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',
+    135: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',
+    136: 'https://www.youtube.com/embed/kJ8ZmSjeGmQ',
   };
   
   videoUrl = computed<SafeResourceUrl | null>(() => {
     const pokemon = this.pokemon();
     if (!pokemon) return null;
     
-    // Use specific video if available, otherwise use a generic Pokémon video
     const url = this.videoMap[pokemon.id] || 'https://www.youtube.com/embed/dQw4w9WgXcQ';
     console.log('Video URL for', pokemon.name, ':', url);
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);

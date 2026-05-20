@@ -91,18 +91,23 @@
 }
 
 /* ============================================
-   Top Info Section - Horizontal Layout
+   Top Info Section - Centered Layout
    ============================================ */
 .top-info-section {
   display: flex;
   align-items: center;
-  gap: 32px;
+  justify-content: center;
+  gap: 48px;
   margin-bottom: 32px;
-  padding: 20px;
+  padding: 24px 20px;
   background: var(--bg-secondary, #0f0f0f);
   border-radius: 24px;
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   flex-wrap: wrap;
+  
+  @media (min-width: 769px) {
+    justify-content: center;
+  }
 }
 
 /* Sprite Wrapper - Fixed Size */
@@ -134,12 +139,14 @@
   }
 }
 
-/* Info Panel - Audio + Types */
+/* Info Panel - Vertically Centered */
 .info-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 20px;
+  min-width: 160px;
 }
 
 .audio-btn {
@@ -147,7 +154,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: 12px 28px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
@@ -156,7 +163,8 @@
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.2s;
-  width: fit-content;
+  width: 100%;
+  max-width: 180px;
   
   .audio-icon {
     font-size: 1.2rem;
@@ -179,7 +187,9 @@
 .types-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .section-label {
@@ -193,6 +203,7 @@
 .type-badges {
   display: flex;
   gap: 12px;
+  justify-content: center;
   flex-wrap: wrap;
 }
 
@@ -444,7 +455,8 @@
   
   .top-info-section {
     flex-direction: column;
-    text-align: center;
+    gap: 24px;
+    padding: 20px;
   }
   
   .pokemon-sprite-wrapper {
@@ -458,22 +470,12 @@
   }
   
   .info-panel {
-    align-items: center;
     width: 100%;
+    max-width: 280px;
   }
   
   .audio-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .types-section {
-    align-items: center;
-    width: 100%;
-  }
-  
-  .type-badges {
-    justify-content: center;
+    max-width: 200px;
   }
   
   .info-grid {
@@ -482,6 +484,19 @@
   
   .info-card p {
     font-size: 16px;
+  }
+  
+  .stat-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .stat-label {
+    width: 100%;
+  }
+  
+  .stat-bar-container {
+    width: 100%;
   }
 }
 

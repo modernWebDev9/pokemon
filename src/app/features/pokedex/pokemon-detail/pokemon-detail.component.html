@@ -11,7 +11,7 @@
     
     <div class="detail-content" *ngIf="pokemon() as p">
       
-      <!-- Top Section: Sprite + Audio + Types - Horizontal Layout -->
+      <!-- Top Section: Sprite + Audio + Types - Vertically Centered -->
       <div class="top-info-section">
         
         <!-- Sprite Image - Fixed Size -->
@@ -23,7 +23,7 @@
             (error)="onImageError($event)" />
         </div>
         
-        <!-- Right Panel: Audio Button + Types -->
+        <!-- Center Panel: Audio Button + Types - Vertically Centered -->
         <div class="info-panel">
           <button class="audio-btn" (click)="playAudio()" [class.playing]="isPlaying()">
             <span class="audio-icon">🔊</span>
@@ -42,15 +42,15 @@
         
       </div>
       
-      <!-- Info Grid - Height, Weight, Total Stats -->
+      <!-- Info Grid - Height, Weight, Total Stats with Decimal Formatting -->
       <div class="info-grid">
         <div class="info-card">
           <h4>Height</h4>
-          <p>{{ p.height / 10 }} m</p>
+          <p>{{ formatDecimal(p.height / 10) }} m</p>
         </div>
         <div class="info-card">
           <h4>Weight</h4>
-          <p>{{ p.weight / 10 }} kg</p>
+          <p>{{ formatDecimal(p.weight / 10) }} kg</p>
         </div>
         <div class="info-card">
           <h4>Total Stats</h4>
@@ -58,7 +58,7 @@
         </div>
       </div>
       
-      <!-- Stats Radar Chart - Full Width, Aligned with other sections -->
+      <!-- Stats Radar Chart - Full Width -->
       <div class="chart-section">
         <h4>Stats Radar Chart</h4>
         <div class="chart-container-full">

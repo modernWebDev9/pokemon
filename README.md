@@ -66,7 +66,7 @@ git clone https://github.com/modernWebDev9/pokemon.git
 cd pokemon
 npm install
 
-# Start JSON Server (Terminal 1)
-npm run start
+# Start Server (Terminal 1)
+npm start
 # Start JSON Server (Terminal 2)
 npx json-server db.json --port 4000
