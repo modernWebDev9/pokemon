@@ -54,10 +54,6 @@
             <button class="upload-cancel" (click)="cancelUpload()">✗ Cancel</button>
           </div>
         }
-        
-        @if (trainer()?.avatarUrl && !avatarPreviewUrl() && !isUploading() && isEditing()) {
-          <button class="remove-avatar" (click)="editAvatarUrl.set(''); avatarPreviewUrl.set(null);">🗑 Remove</button>
-        }
       </div>
     </div>
     
@@ -127,10 +123,9 @@
         
         <div class="avatar-info">
           <small>
-            💡 <strong>No compression applied!</strong> Images are converted to Base64 and stored directly in db.json.<br>
-            📏 Max file size: 2MB (Base64 will increase size by ~33%)<br>
-            🖼️ Recommended size: 500KB - 1MB for best performance<br>
-            ✨ Image will be displayed in full without cropping or compression
+            📏 Max file size: <strong>70KB</strong><br>
+            🖼️ Supported formats: JPEG, PNG, GIF, WebP<br>
+            ✨ Click avatar to upload a new image
           </small>
         </div>
         

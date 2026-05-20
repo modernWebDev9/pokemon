@@ -401,8 +401,9 @@ export class TrainerStore {
       console.log(`Avatar - Base64: ${isBase64}, Size: ${sizeKB.toFixed(1)}KB`);
       
       // Reject if too large (json-server limit ~1MB)
-      if (isBase64 && sizeKB > 800) {
-        const errorMsg = `Avatar too large (${sizeKB.toFixed(1)}KB). Maximum allowed is 800KB. Please use a smaller image.`;
+      // Base64 size limit: 700KB (allows ~525KB original images with 33% Base64 overhead)
+      if (isBase64 && sizeKB > 700) {
+        const errorMsg = `Avatar too large (${sizeKB.toFixed(1)}KB). Maximum allowed is 700KB (approx 525KB original). Please use a smaller image.`;
         console.error(errorMsg);
         return throwError(() => new Error(errorMsg));
       }
@@ -449,7 +450,7 @@ export class TrainerStore {
         let errorMessage = 'Failed to update profile';
         
         if (error.status === 500) {
-          errorMessage = 'Server error: The avatar image may be too large. Please use a smaller image (max 300KB original).';
+          errorMessage = 'Server error: The avatar image may be too large. Please use a smaller image (max 70KB original).';
         } else if (error.status === 413) {
           errorMessage = 'Avatar image too large for the server. Please use a smaller image.';
         } else if (error.status === 400) {

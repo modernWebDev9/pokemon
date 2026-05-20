@@ -50,6 +50,9 @@ export class TrainerProfileComponent implements OnInit {
     'Champion', 'Master', 'Legend'
   ];
 
+  // Max file size: 500KB = 500 * 1024 = 512,000 bytes
+  private readonly MAX_FILE_SIZE = 500 * 1024;
+
   ngOnInit(): void {
     console.log('TrainerProfileComponent initialized');
 
@@ -84,18 +87,12 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
-  /**
-   * Gets the initial letter from trainer name for avatar placeholder
-   */
   getInitial(): string {
     const name = this.trainer()?.name;
     if (!name) return 'T';
     return name.charAt(0).toUpperCase();
   }
 
-  /**
-   * Gets the display URL for trainer avatar
-   */
   getDisplayAvatarUrl(): string {
     const preview = this.avatarPreviewUrl();
     if (preview) {
@@ -107,9 +104,6 @@ export class TrainerProfileComponent implements OnInit {
     return '';
   }
 
-  /**
-   * Handles image loading errors - clears invalid avatar
-   */
   onImageError(event: Event): void {
     console.log('Image load error, clearing avatar URL');
     const trainer = this.trainer();
@@ -120,7 +114,7 @@ export class TrainerProfileComponent implements OnInit {
           this.editAvatarUrl.set('');
           this.avatarPreviewUrl.set(null);
           this.originalAvatarUrl.set('');
-          this.error.set('Avatar image could not be loaded. URL has been cleared.');
+          this.error.set('Avatar image could not be loaded. Please upload a new image.');
           setTimeout(() => this.error.set(null), 3000);
         },
         error: (err) => {
@@ -130,22 +124,21 @@ export class TrainerProfileComponent implements OnInit {
     }
   }
 
-  /**
-   * Triggers file input click for avatar upload
-   */
   triggerFileUpload(): void {
     this.fileInput?.nativeElement.click();
   }
 
   /**
-   * Handles file selection - NO COMPRESSION, uses original image as-is
+   * Handles file selection - Max file size: 100KB
+   * No Base64 size limit check - only original file size matters
    */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
 
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      console.log('File selected:', file.name, file.type, (file.size / 1024).toFixed(1) + 'KB');
+      const fileSizeKB = (file.size / 1024).toFixed(1);
+      console.log('File selected:', file.name, file.type, fileSizeKB + 'KB');
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -154,9 +147,9 @@ export class TrainerProfileComponent implements OnInit {
         return;
       }
 
-      // Max file size: 2MB (json-server can handle ~1-2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        this.error.set('Image size must be less than 2MB');
+      // Check file size against 500KB limit only
+      if (file.size > this.MAX_FILE_SIZE) {
+        this.error.set(`Image size must be less than 70KB (Current: ${fileSizeKB}KB). Please compress your image.`);
         setTimeout(() => this.error.set(null), 3000);
         return;
       }
@@ -164,21 +157,14 @@ export class TrainerProfileComponent implements OnInit {
       this.isUploading.set(true);
       this.error.set(null);
 
-      // Convert to Base64 Data URL WITHOUT compression
+      // Convert to Base64 Data URL
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
-        console.log('File converted to Data URL. Length:', dataUrl.length, 'chars');
+        const base64SizeKB = (dataUrl.length / 1024).toFixed(1);
+        console.log('Base64 size:', base64SizeKB + 'KB');
         
-        // Check if the Data URL is too long for json-server (2.5MB limit)
-        if (dataUrl.length > 2.5 * 1024 * 1024) {
-          this.error.set('Image is too large after Base64 encoding. Please select a smaller image (max 1MB original).');
-          this.isUploading.set(false);
-          setTimeout(() => this.error.set(null), 3000);
-          return;
-        }
-        
-        // Store the original Base64 Data URL without any compression
+        // Store the Base64 Data URL - no additional size check
         this.avatarPreviewUrl.set(dataUrl);
         this.editAvatarUrl.set(dataUrl);
         
@@ -194,14 +180,10 @@ export class TrainerProfileComponent implements OnInit {
       };
       reader.readAsDataURL(file);
       
-      // Clear file input value so same file can be selected again
       input.value = '';
     }
   }
 
-  /**
-   * Cancel pending avatar upload
-   */
   cancelUpload(): void {
     this.avatarPreviewUrl.set(null);
     this.editAvatarUrl.set(this.originalAvatarUrl());
@@ -209,9 +191,6 @@ export class TrainerProfileComponent implements OnInit {
     this.error.set(null);
   }
 
-  /**
-   * Enables edit mode
-   */
   startEdit(): void {
     const current = this.trainer();
     if (current) {
@@ -233,9 +212,6 @@ export class TrainerProfileComponent implements OnInit {
     console.log('Edit mode started');
   }
 
-  /**
-   * Cancels edit mode
-   */
   cancelEdit(): void {
     this.cancelUpload();
     this.isEditing.set(false);
@@ -244,9 +220,6 @@ export class TrainerProfileComponent implements OnInit {
     console.log('Edit mode cancelled');
   }
 
-  /**
-   * Saves profile changes (name, region, rank, avatarUrl)
-   */
   saveProfile(): void {
     const trainer = this.trainer();
     if (!trainer) return;
@@ -267,17 +240,6 @@ export class TrainerProfileComponent implements OnInit {
     }
     if (this.editAvatarUrl() !== (trainer.avatarUrl || '')) {
       updates.avatarUrl = this.editAvatarUrl();
-      
-      // Check size before saving
-      if (updates.avatarUrl && updates.avatarUrl.startsWith('data:image/')) {
-        const sizeKB = updates.avatarUrl.length / 1024;
-        console.log(`Avatar Base64 size: ${sizeKB.toFixed(1)}KB`);
-        if (sizeKB > 2500) {
-          this.error.set(`Avatar too large (${sizeKB.toFixed(1)}KB). Please use a smaller image (max 1MB original).`);
-          this.saving.set(false);
-          return;
-        }
-      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -300,7 +262,7 @@ export class TrainerProfileComponent implements OnInit {
         console.error('Save error:', err);
         
         if (err.message?.includes('413') || err.message?.includes('payload') || err.message?.includes('large')) {
-          this.error.set('Avatar too large for server. Please use a smaller image (max 1MB).');
+          this.error.set('Avatar too large. Please use an image smaller than 100KB.');
         } else {
           this.error.set(err.message || 'Failed to update profile');
         }
@@ -313,9 +275,6 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
-  /**
-   * Gets CSS class for rank badge styling
-   */
   getRankClass(rank: string): string {
     const rankMap: Record<string, string> = {
       'Trainer': 'rank-trainer',
