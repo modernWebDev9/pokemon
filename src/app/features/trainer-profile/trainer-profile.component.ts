@@ -84,24 +84,32 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * Gets the initial letter from trainer name for avatar placeholder
+   */
   getInitial(): string {
     const name = this.trainer()?.name;
     if (!name) return 'T';
     return name.charAt(0).toUpperCase();
   }
 
+  /**
+   * Gets the display URL for trainer avatar
+   */
   getDisplayAvatarUrl(): string {
-    const trainer = this.trainer();
     const preview = this.avatarPreviewUrl();
     if (preview) {
       return preview;
     }
-    if (trainer?.avatarUrl && trainer.avatarUrl !== '') {
-      return trainer.avatarUrl;
+    if (this.trainer()?.avatarUrl) {
+      return this.trainer()!.avatarUrl;
     }
     return '';
   }
 
+  /**
+   * Handles image loading errors - clears invalid avatar
+   */
   onImageError(event: Event): void {
     console.log('Image load error, clearing avatar URL');
     const trainer = this.trainer();
@@ -122,80 +130,33 @@ export class TrainerProfileComponent implements OnInit {
     }
   }
 
+  /**
+   * Triggers file input click for avatar upload
+   */
   triggerFileUpload(): void {
     this.fileInput?.nativeElement.click();
   }
 
   /**
-   * 이미지 압축 함수 - Canvas를 사용하여 이미지 크기 줄이기
+   * Handles file selection - NO COMPRESSION, uses original image as-is
    */
-  compressImage(file: File, maxWidth: number = 200, maxHeight: number = 200, quality: number = 0.6): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // 새 크기 계산 (종횡비 유지)
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
-            }
-          }
-          
-          // Canvas로 이미지 리사이즈 및 압축
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-          
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // JPEG로 압축 (품질 0.6)
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          console.log(`Compressed: ${(file.size / 1024).toFixed(1)}KB → ${(dataUrl.length / 1024).toFixed(1)}KB, ${width}x${height}`);
-          resolve(dataUrl);
-        };
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
-  }
-
-  /**
-   * Handles file selection - compresses and converts to Base64
-   */
-  async onFileSelected(event: Event): Promise<void> {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
 
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
       console.log('File selected:', file.name, file.type, (file.size / 1024).toFixed(1) + 'KB');
 
+      // Validate file type
       if (!file.type.startsWith('image/')) {
         this.error.set('Please select an image file (JPG, PNG, GIF, WebP)');
         setTimeout(() => this.error.set(null), 3000);
         return;
       }
 
-      // 더 엄격한 크기 제한: 200KB
-      if (file.size > 200 * 1024) {
-        this.error.set('Image size must be less than 200KB (will be compressed further)');
+      // Max file size: 2MB (json-server can handle ~1-2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        this.error.set('Image size must be less than 2MB');
         setTimeout(() => this.error.set(null), 3000);
         return;
       }
@@ -203,34 +164,44 @@ export class TrainerProfileComponent implements OnInit {
       this.isUploading.set(true);
       this.error.set(null);
 
-      try {
-        // 이미지 압축 (200x200, 60% 품질)
-        const compressedDataUrl = await this.compressImage(file, 200, 200, 0.6);
+      // Convert to Base64 Data URL WITHOUT compression
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        console.log('File converted to Data URL. Length:', dataUrl.length, 'chars');
         
-        // 최종 크기 확인 (100KB 미만 권장)
-        if (compressedDataUrl.length > 150000) {
-          this.error.set(`Image still too large after compression (${(compressedDataUrl.length / 1024).toFixed(1)}KB). Please use a smaller image.`);
+        // Check if the Data URL is too long for json-server (2.5MB limit)
+        if (dataUrl.length > 2.5 * 1024 * 1024) {
+          this.error.set('Image is too large after Base64 encoding. Please select a smaller image (max 1MB original).');
           this.isUploading.set(false);
           setTimeout(() => this.error.set(null), 3000);
           return;
         }
         
-        this.avatarPreviewUrl.set(compressedDataUrl);
-        this.editAvatarUrl.set(compressedDataUrl);
+        // Store the original Base64 Data URL without any compression
+        this.avatarPreviewUrl.set(dataUrl);
+        this.editAvatarUrl.set(dataUrl);
+        
         this.isUploading.set(false);
-        this.success.set('Image compressed and loaded! Click Save to update.');
+        this.success.set('Image loaded! Click Save to update your avatar.');
         setTimeout(() => this.success.set(null), 3000);
-      } catch (err) {
-        console.error('Compression error:', err);
+      };
+      reader.onerror = (err) => {
+        console.error('FileReader error:', err);
         this.isUploading.set(false);
-        this.error.set('Failed to process image. Please try another file.');
+        this.error.set('Failed to read image file');
         setTimeout(() => this.error.set(null), 3000);
-      }
+      };
+      reader.readAsDataURL(file);
       
+      // Clear file input value so same file can be selected again
       input.value = '';
     }
   }
 
+  /**
+   * Cancel pending avatar upload
+   */
   cancelUpload(): void {
     this.avatarPreviewUrl.set(null);
     this.editAvatarUrl.set(this.originalAvatarUrl());
@@ -238,6 +209,9 @@ export class TrainerProfileComponent implements OnInit {
     this.error.set(null);
   }
 
+  /**
+   * Enables edit mode
+   */
   startEdit(): void {
     const current = this.trainer();
     if (current) {
@@ -256,15 +230,23 @@ export class TrainerProfileComponent implements OnInit {
     this.isEditing.set(true);
     this.error.set(null);
     this.success.set(null);
+    console.log('Edit mode started');
   }
 
+  /**
+   * Cancels edit mode
+   */
   cancelEdit(): void {
     this.cancelUpload();
     this.isEditing.set(false);
     this.error.set(null);
     this.success.set(null);
+    console.log('Edit mode cancelled');
   }
 
+  /**
+   * Saves profile changes (name, region, rank, avatarUrl)
+   */
   saveProfile(): void {
     const trainer = this.trainer();
     if (!trainer) return;
@@ -286,12 +268,12 @@ export class TrainerProfileComponent implements OnInit {
     if (this.editAvatarUrl() !== (trainer.avatarUrl || '')) {
       updates.avatarUrl = this.editAvatarUrl();
       
-      // 최종 크기 확인 (100KB 미만 권장)
+      // Check size before saving
       if (updates.avatarUrl && updates.avatarUrl.startsWith('data:image/')) {
         const sizeKB = updates.avatarUrl.length / 1024;
-        console.log(`Final avatar size: ${sizeKB.toFixed(1)}KB`);
-        if (sizeKB > 150) {
-          this.error.set(`Avatar too large (${sizeKB.toFixed(1)}KB). Maximum allowed is 150KB.`);
+        console.log(`Avatar Base64 size: ${sizeKB.toFixed(1)}KB`);
+        if (sizeKB > 2500) {
+          this.error.set(`Avatar too large (${sizeKB.toFixed(1)}KB). Please use a smaller image (max 1MB original).`);
           this.saving.set(false);
           return;
         }
@@ -317,9 +299,8 @@ export class TrainerProfileComponent implements OnInit {
         this.saving.set(false);
         console.error('Save error:', err);
         
-        // 더 자세한 에러 메시지
-        if (err.message?.includes('500') || err.message?.includes('payload') || err.message?.includes('large')) {
-          this.error.set('Avatar too large for server. Please use a very small image (max 100KB original).');
+        if (err.message?.includes('413') || err.message?.includes('payload') || err.message?.includes('large')) {
+          this.error.set('Avatar too large for server. Please use a smaller image (max 1MB).');
         } else {
           this.error.set(err.message || 'Failed to update profile');
         }
@@ -332,6 +313,9 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * Gets CSS class for rank badge styling
+   */
   getRankClass(rank: string): string {
     const rankMap: Record<string, string> = {
       'Trainer': 'rank-trainer',
