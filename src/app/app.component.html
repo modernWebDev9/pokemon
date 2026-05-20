@@ -52,12 +52,16 @@
         <!-- Trainer Card -->
         <div class="trainer-card" (click)="goToProfile()">
           <div class="trainer-avatar">
-            <span>A</span>
+            @if (trainer()?.avatarUrl) {
+              <img [src]="trainer()?.avatarUrl" alt="Trainer Avatar" class="avatar-image" (error)="onAvatarError($event)" />
+            } @else {
+              <span>{{ trainer()?.name?.charAt(0) || 'A' }}</span>
+            }
             <div class="avatar-status"></div>
           </div>
           <div class="trainer-info">
-            <div class="trainer-name">Ash Ketchum</div>
-            <div class="trainer-rank">Champion</div>
+            <div class="trainer-name">{{ trainer()?.name || 'Ash Ketchum' }}</div>
+            <div class="trainer-rank">{{ trainer()?.rank || 'Champion' }}</div>
           </div>
         </div>
       </div>

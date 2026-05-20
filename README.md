@@ -70,5 +70,3 @@ npm install
 npm run start
 # Start JSON Server (Terminal 2)
 npx json-server db.json --port 4000
-# Start JSON Server (Terminal 3)
-npm run avatar-server
