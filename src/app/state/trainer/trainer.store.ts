@@ -1,0 +1,418 @@
+// src/app/state/trainer/trainer.store.ts
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+export interface Trainer {
+  id: string;
+  name: string;
+  badgeCount: number;
+  region: string;
+  avatarUrl: string;
+  rank: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  trainerId: string;
+  pokemonIds: number[];
+  createdAt: string;
+  competitiveMode: boolean;
+  tier: 'OU' | 'UU' | 'RU' | 'NU' | null;
+}
+
+export interface Battle {
+  id: string;
+  trainerId: string;
+  opponentName: string;
+  teamId: string;
+  result: 'win' | 'loss';
+  date: string;
+  scoreTrainer: number;
+  scoreOpponent: number;
+}
+
+export interface CreateTeamInput {
+  name: string;
+  trainerId: string;
+  pokemonIds: number[];
+  competitiveMode: boolean;
+  tier: 'OU' | 'UU' | 'RU' | 'NU' | null;
+}
+
+export interface TrainerState {
+  currentTrainerId: string;
+  trainer: Trainer | null;
+  teams: Team[];
+  battles: Battle[];
+  loading: boolean;
+  error: string | null;
+}
+
+const INITIAL_STATE: TrainerState = {
+  currentTrainerId: '1',
+  trainer: null,
+  teams: [],
+  battles: [],
+  loading: false,
+  error: null,
+};
+
+@Injectable({ providedIn: 'root' })
+export class TrainerStore {
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:4000';
+
+  private stateSubject = new BehaviorSubject<TrainerState>(INITIAL_STATE);
+  public state$ = this.stateSubject.asObservable();
+
+  public readonly trainer$ = this.state$.pipe(map(state => state.trainer));
+  public readonly teams$ = this.state$.pipe(map(state => state.teams));
+  public readonly battles$ = this.state$.pipe(map(state => state.battles));
+  public readonly loading$ = this.state$.pipe(map(state => state.loading));
+  public readonly error$ = this.state$.pipe(map(state => state.error));
+
+  constructor() {
+    console.log('TrainerStore: Auto-loading trainer 1');
+    this.setCurrentTrainer('1');
+  }
+
+  loadTrainer(trainerId: string): Observable<Trainer | null> {
+    this.setLoading(true);
+
+    return this.http.get<any[]>(`${this.apiUrl}/trainers`).pipe(
+      map((trainers) => {
+        const rawTrainer = trainers.find(t => t.id === trainerId);
+        return rawTrainer ? this.transformTrainer(rawTrainer) : null;
+      }),
+      tap((trainer: Trainer | null) => {
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          trainer,
+          loading: false,
+        });
+      }),
+      catchError((error) => {
+        console.error('Load trainer error:', error);
+        this.setError(error.message || 'Failed to load trainer');
+        this.setLoading(false);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  loadTeams(): Observable<Team[]> {
+    const trainerId = this.stateSubject.value.currentTrainerId;
+
+    return this.http.get<any[]>(`${this.apiUrl}/teams`).pipe(
+      map((teams) => {
+        const filteredTeams = teams.filter(team => team.trainer_id === trainerId);
+        return filteredTeams.map((team: any) => this.transformTeam(team));
+      }),
+      tap((teams: Team[]) => {
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams,
+        });
+      }),
+      catchError((error) => {
+        console.error('Load teams error:', error);
+        this.setError(error.message || 'Failed to load teams');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  loadBattles(): Observable<Battle[]> {
+    const trainerId = this.stateSubject.value.currentTrainerId;
+
+    return this.http.get<any[]>(`${this.apiUrl}/battles`).pipe(
+      map((battles) => {
+        const filteredBattles = battles.filter(battle => battle.trainer_id === trainerId);
+        return filteredBattles.map((battle: any) => this.transformBattle(battle));
+      }),
+      tap((battles: Battle[]) => {
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          battles,
+        });
+      }),
+      catchError((error) => {
+        console.error('Load battles error:', error);
+        this.setError(error.message || 'Failed to load battles');
+        return of([]);
+      })
+    );
+  }
+
+  createTeam(teamData: CreateTeamInput): Observable<Team> {
+    const currentState = this.stateSubject.value;
+    const tempId = `temp_${Date.now()}`;
+
+    const optimisticTeam: Team = {
+      id: tempId,
+      name: teamData.name,
+      trainerId: teamData.trainerId,
+      pokemonIds: teamData.pokemonIds,
+      createdAt: new Date().toISOString(),
+      competitiveMode: teamData.competitiveMode,
+      tier: teamData.tier,
+    };
+
+    this.stateSubject.next({
+      ...currentState,
+      teams: [...currentState.teams, optimisticTeam],
+    });
+
+    const newTeam = {
+      name: teamData.name,
+      trainer_id: teamData.trainerId,
+      pokemon_ids: teamData.pokemonIds,
+      created_at: new Date().toISOString(),
+      competitive_mode: teamData.competitiveMode,
+      tier: teamData.tier,
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/teams`, newTeam).pipe(
+      map((realTeam) => {
+        console.log('Team created:', realTeam);
+        return this.transformTeam(realTeam);
+      }),
+      tap((realTeam: Team) => {
+        const updatedTeams = this.stateSubject.value.teams.map((team: Team) =>
+          team.id === tempId ? realTeam : team
+        );
+
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams: updatedTeams,
+        });
+      }),
+      catchError((error) => {
+        console.error('Create team error:', error);
+
+        const rolledBackTeams = this.stateSubject.value.teams.filter(
+          (team: Team) => team.id !== tempId
+        );
+
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams: rolledBackTeams,
+          error: error.message || 'Failed to create team',
+        });
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId' | 'pokemonIds'>>): Observable<Team> {
+    const currentState = this.stateSubject.value;
+    const originalTeam = currentState.teams.find((t: Team) => t.id === id);
+
+    if (!originalTeam) {
+      return throwError(() => new Error('Team not found'));
+    }
+
+    const optimisticTeam = { ...originalTeam, ...updates };
+
+    this.stateSubject.next({
+      ...currentState,
+      teams: currentState.teams.map((team: Team) =>
+        team.id === id ? optimisticTeam : team
+      ),
+    });
+
+    const updatePayload: any = {};
+    if (updates.name !== undefined) updatePayload.name = updates.name;
+    if (updates.competitiveMode !== undefined) updatePayload.competitive_mode = updates.competitiveMode;
+    if (updates.tier !== undefined) updatePayload.tier = updates.tier;
+
+    return this.http.patch(`${this.apiUrl}/teams/${id}`, updatePayload).pipe(
+      map((updatedTeam: any) => {
+        console.log('Team updated:', updatedTeam);
+        return this.transformTeam(updatedTeam);
+      }),
+      tap((realTeam: Team) => {
+        const updatedTeams = this.stateSubject.value.teams.map((team: Team) =>
+          team.id === id ? { ...realTeam, pokemonIds: originalTeam.pokemonIds } : team
+        );
+
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams: updatedTeams,
+        });
+      }),
+      catchError((error) => {
+        console.error('Update team error:', error);
+
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams: this.stateSubject.value.teams.map((team: Team) =>
+            team.id === id ? originalTeam : team
+          ),
+          error: error.message || 'Failed to update team',
+        });
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  deleteTeam(id: string): Observable<void> {
+    const currentState = this.stateSubject.value;
+    const deletedTeam = currentState.teams.find((t: Team) => t.id === id);
+
+    if (!deletedTeam) {
+      return throwError(() => new Error('Team not found'));
+    }
+
+    this.stateSubject.next({
+      ...currentState,
+      teams: currentState.teams.filter((team: Team) => team.id !== id),
+    });
+
+    return this.http.delete(`${this.apiUrl}/teams/${id}`).pipe(
+      map(() => {
+        console.log('Team deleted:', id);
+        return void 0;
+      }),
+      catchError((error) => {
+        console.error('Delete team error:', error);
+
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          teams: [...this.stateSubject.value.teams, deletedTeam],
+          error: error.message || 'Failed to delete team',
+        });
+
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Update trainer profile using PATCH
+   */
+  updateTrainer(id: string, updates: Partial<Omit<Trainer, 'id'>>): Observable<Trainer> {
+    const currentState = this.stateSubject.value;
+    const optimisticTrainer = { ...currentState.trainer, ...updates };
+
+    this.stateSubject.next({
+      ...currentState,
+      trainer: optimisticTrainer as Trainer,
+    });
+
+    const updatePayload: any = {};
+    if (updates.name !== undefined) updatePayload.name = updates.name;
+    if (updates.region !== undefined) updatePayload.region = updates.region;
+    if (updates.rank !== undefined) updatePayload.rank = updates.rank;
+    if (updates.badgeCount !== undefined) updatePayload.badge_count = updates.badgeCount;
+    if (updates.avatarUrl !== undefined) updatePayload.avatar_url = updates.avatarUrl;
+
+    return this.http.patch(`${this.apiUrl}/trainers/${id}`, updatePayload).pipe(
+      map((updatedTrainer: any) => {
+        console.log('Trainer updated via PATCH:', updatedTrainer);
+        return this.transformTrainer(updatedTrainer);
+      }),
+      tap((realTrainer: Trainer) => {
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          trainer: realTrainer,
+        });
+      }),
+      catchError((error) => {
+        console.error('Update trainer error:', error);
+        
+        this.stateSubject.next({
+          ...this.stateSubject.value,
+          trainer: currentState.trainer,
+          error: error.message || 'Failed to update trainer',
+        });
+        
+        return throwError(() => error);
+      })
+    );
+  }
+
+  setCurrentTrainer(trainerId: string): void {
+    this.stateSubject.next({
+      ...this.stateSubject.value,
+      currentTrainerId: trainerId,
+    });
+
+    this.loadTrainer(trainerId).subscribe();
+    this.loadTeams().subscribe();
+    this.loadBattles().subscribe();
+  }
+
+  clearError(): void {
+    this.stateSubject.next({
+      ...this.stateSubject.value,
+      error: null,
+    });
+  }
+
+  getTeamCount(): number {
+    return this.stateSubject.value.teams.length;
+  }
+
+  reset(): void {
+    this.stateSubject.next(INITIAL_STATE);
+  }
+
+  private setLoading(loading: boolean): void {
+    this.stateSubject.next({
+      ...this.stateSubject.value,
+      loading,
+    });
+  }
+
+  private setError(error: string | null): void {
+    this.stateSubject.next({
+      ...this.stateSubject.value,
+      error,
+    });
+  }
+
+  private transformTrainer(raw: any): Trainer {
+  console.log('Transforming raw trainer data:', raw);
+  const transformed = {
+    id: String(raw.id),
+    name: raw.name || 'Unknown Trainer',
+    badgeCount: raw.badge_count || 0,
+    region: raw.region || 'Kanto',
+    avatarUrl: raw.avatar_url || '',  
+    rank: raw.rank || 'Trainer',
+  };
+  console.log('Transformed trainer:', transformed);
+  return transformed;
+}
+
+  private transformTeam(raw: any): Team {
+    return {
+      id: String(raw.id),
+      name: raw.name || 'Unnamed Team',
+      trainerId: String(raw.trainer_id),
+      pokemonIds: raw.pokemon_ids || [],
+      createdAt: raw.created_at || new Date().toISOString(),
+      competitiveMode: raw.competitive_mode || false,
+      tier: raw.tier || null,
+    };
+  }
+
+  private transformBattle(raw: any): Battle {
+    return {
+      id: String(raw.id),
+      trainerId: String(raw.trainer_id),
+      opponentName: raw.opponent_name || 'Unknown',
+      teamId: String(raw.team_id),
+      result: raw.result === 'win' ? 'win' : 'loss',
+      date: raw.date || new Date().toISOString(),
+      scoreTrainer: raw.score_trainer || 0,
+      scoreOpponent: raw.score_opponent || 0,
+    };
+  }
+}

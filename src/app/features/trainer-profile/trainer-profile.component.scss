@@ -1,0 +1,634 @@
+// src/app/features/trainer-profile/trainer-profile.component.scss
+
+/* ============================================
+   Profile Container
+   ============================================ */
+.profile-container {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.profile-header {
+  text-align: center;
+  margin-bottom: 32px;
+  
+  h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00f5ff, #b300ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 0.9rem;
+  }
+}
+
+/* ============================================
+   Alert Messages
+   ============================================ */
+.alert {
+  padding: 12px 20px;
+  border-radius: 60px;
+  margin-bottom: 20px;
+  text-align: center;
+  animation: fadeInUp 0.3s ease-out;
+  
+  &.success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+  }
+  
+  &.error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+  }
+}
+
+/* ============================================
+   Profile Card
+   ============================================ */
+.profile-card {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 32px;
+  padding: 36px;
+  margin-bottom: 28px;
+  text-align: center;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  box-shadow: var(--shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 245, 255, 0.2);
+  }
+}
+
+/* ============================================
+   Avatar Section
+   ============================================ */
+.avatar-section {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-placeholder {
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+  
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .avatar-initial {
+    font-size: 4rem;
+    font-weight: 800;
+    color: white;
+    text-align: center;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  
+  // Only clickable in edit mode
+  &.editable {
+    cursor: pointer;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    }
+  }
+}
+
+/* Upload Progress */
+.upload-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: white;
+  font-size: 0.7rem;
+  z-index: 15;
+  
+  .progress-spinner {
+    width: 30px;
+    height: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Upload Actions */
+.upload-actions {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: var(--bg-card, #1a1a1a);
+  padding: 6px 12px;
+  border-radius: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  z-index: 20;
+  
+  button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+}
+
+.upload-confirm {
+  background: #10b981;
+  color: white;
+  
+  &:hover {
+    background: #059669;
+  }
+}
+
+.upload-cancel {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  
+  &:hover {
+    background: #ef4444;
+  }
+}
+
+.remove-avatar {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  z-index: 20;
+  
+  &:hover {
+    background: #ef4444;
+    transform: translateX(-50%) translateY(-2px);
+  }
+}
+
+/* ============================================
+   Profile Info
+   ============================================ */
+.profile-info {
+  text-align: left;
+  margin-bottom: 28px;
+  background: var(--bg-secondary, #0f0f0f);
+  border-radius: 24px;
+  padding: 8px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.06));
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  .info-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #a0a0a0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .info-value {
+    font-weight: 600;
+    color: var(--text-primary, white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-right: 8px;
+  
+  .badge-icon {
+    font-size: 1rem;
+  }
+}
+
+.rank-value {
+  padding: 4px 14px;
+  border-radius: 40px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  
+  &.rank-trainer { background: linear-gradient(135deg, #64748b, #475569); color: white; }
+  &.rank-gym { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+  &.rank-elite { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+  &.rank-champion { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  &.rank-master { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+  &.rank-legend { background: linear-gradient(135deg, #00f5ff, #b300ff); color: white; }
+}
+
+/* ============================================
+   Edit Button
+   ============================================ */
+.edit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 60px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+}
+
+/* ============================================
+   Edit Form
+   ============================================ */
+.edit-form {
+  text-align: left;
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #a0a0a0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-secondary, #0f0f0f);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+  border-radius: 60px;
+  font-size: 0.9rem;
+  color: var(--text-primary, white);
+  transition: all 0.2s;
+  
+  &:focus {
+    outline: none;
+    border-color: #00f5ff;
+    box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+  }
+}
+
+select.form-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  padding-right: 45px;
+}
+
+select.form-input option {
+  background: var(--bg-secondary, #1a1a1a);
+  color: var(--text-primary, white);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 28px;
+  
+  button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 60px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+  color: var(--text-secondary, #a0a0a0);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ============================================
+   Stats Card
+   ============================================ */
+.stats-card {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 28px;
+  padding: 28px;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.15));
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+  
+  h3 {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text-primary, white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    
+    &::before {
+      content: "🏆";
+      font-size: 1.2rem;
+    }
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-secondary, #0f0f0f);
+  border-radius: 20px;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-3px);
+    background: rgba(0, 245, 255, 0.05);
+  }
+  
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-primary, white);
+    line-height: 1.2;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--text-secondary, #a0a0a0);
+    margin-top: 8px;
+  }
+  
+  &.win .stat-value { color: #10b981; }
+  &.loss .stat-value { color: #ef4444; }
+  &.rate .stat-value { color: #f59e0b; }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+  .profile-card, .stats-card {
+    padding: 24px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .profile-header h2 {
+    font-size: 1.6rem;
+  }
+  
+  .avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    
+    .avatar-initial {
+      font-size: 2.5rem;
+    }
+  }
+  
+  .upload-actions, .remove-avatar {
+    bottom: -40px;
+    
+    button {
+      padding: 3px 10px;
+      font-size: 0.65rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-card, .stats-card {
+    padding: 20px;
+  }
+  
+  .stat-item {
+    padding: 16px;
+    
+    .stat-value {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+/* ============================================
+   Light Theme Override
+   ============================================ */
+[data-theme="light"] {
+  .profile-card, .stats-card {
+    background: white;
+  }
+  
+  .profile-info {
+    background: #f8f9fa;
+  }
+  
+  .info-row {
+    border-bottom-color: #e0e0e0;
+    
+    .info-value {
+      color: #1a1a1a;
+    }
+  }
+  
+  .form-input {
+    background: #f5f5f5;
+    color: #1a1a1a;
+    
+    option {
+      background: white;
+      color: #1a1a1a;
+    }
+  }
+  
+  .stat-item {
+    background: #f8f9fa;
+    
+    .stat-value {
+      color: #1a1a1a;
+    }
+    
+    &.win .stat-value { color: #10b981; }
+    &.loss .stat-value { color: #ef4444; }
+    &.rate .stat-value { color: #f59e0b; }
+  }
+  
+  .cancel-btn {
+    border-color: #d0d0d0;
+    color: #666;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+  }
+  
+  .rank-value {
+    &.rank-trainer { background: #e2e8f0; color: #475569; }
+    &.rank-gym { background: #dbeafe; color: #2563eb; }
+    &.rank-elite { background: #ede9fe; color: #7c3aed; }
+    &.rank-champion { background: #fef3c7; color: #d97706; }
+    &.rank-master { background: #fee2e2; color: #dc2626; }
+    &.rank-legend { background: linear-gradient(135deg, #00f5ff, #b300ff); color: white; }
+  }
+  
+  .avatar-placeholder {
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+  }
+  
+  .upload-actions {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+}

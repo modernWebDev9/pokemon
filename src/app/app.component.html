@@ -1,0 +1,85 @@
+<!-- src/app/app.component.html -->
+<div class="app">
+  
+  <!-- Modern Navigation Bar -->
+  <nav class="navbar glass-dark">
+    <div class="navbar-container">
+      
+      <!-- Logo - Clickable to go to home -->
+      <div class="logo" (click)="goToHome()">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <span class="gradient-text">Poké</span>
+          <span>dex</span>
+        </div>
+        <div class="logo-badge">v2.0</div>
+      </div>
+      
+      <!-- Navigation Links -->
+      <div class="nav-links">
+        <a routerLink="/pokedex" routerLinkActive="active" class="nav-link">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Explore</span>
+          <span class="nav-indicator"></span>
+        </a>
+        
+        <a routerLink="/teams" routerLinkActive="active" class="nav-link">
+          <span class="nav-icon">⚔️</span>
+          <span class="nav-label">Teams</span>
+          <span class="nav-indicator"></span>
+        </a>
+        
+        <a routerLink="/battles" routerLinkActive="active" class="nav-link">
+          <span class="nav-icon">🏆</span>
+          <span class="nav-label">Battles</span>
+          <span class="nav-indicator"></span>
+        </a>
+        
+        <a routerLink="/profile" routerLinkActive="active" class="nav-link">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Profile</span>
+          <span class="nav-indicator"></span>
+        </a>
+      </div>
+      
+      <!-- Right Section -->
+      <div class="nav-right">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" (click)="toggleTheme()">
+          <span class="theme-icon">{{ isDarkMode() ? '🌙' : '☀️' }}</span>
+        </button>
+        
+        <!-- Trainer Card -->
+        <div class="trainer-card" (click)="goToProfile()">
+          <div class="trainer-avatar">
+            <span>A</span>
+            <div class="avatar-status"></div>
+          </div>
+          <div class="trainer-info">
+            <div class="trainer-name">Ash Ketchum</div>
+            <div class="trainer-rank">Champion</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Content -->
+  <main class="main">
+    <div class="container">
+      <router-outlet />
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <span>© 2024 Pokédex Trainer Dashboard</span>
+      <span class="footer-divider">•</span>
+      <span>Built with Angular 19</span>
+      <span class="footer-divider">•</span>
+      <span>⚡ Real-time updates</span>
+    </div>
+  </footer>
+  
+</div>

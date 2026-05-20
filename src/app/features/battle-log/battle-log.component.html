@@ -1,0 +1,112 @@
+<!-- src/app/features/battle-log/battle-log.component.html -->
+<div class="battle-log-container">
+  
+  <!-- Header -->
+  <div class="header">
+    <h2>Battle Log</h2>
+    <p>Real-time battle updates (polling every 5 seconds)</p>
+  </div>
+  
+  <!-- Statistics Cards -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="stat-value">{{ battleStats().total }}</div>
+      <div class="stat-label">Total Battles</div>
+    </div>
+    <div class="stat-card win">
+      <div class="stat-value">{{ battleStats().wins }}</div>
+      <div class="stat-label">Wins</div>
+    </div>
+    <div class="stat-card loss">
+      <div class="stat-value">{{ battleStats().losses }}</div>
+      <div class="stat-label">Losses</div>
+    </div>
+    <div class="stat-card rate">
+      <div class="stat-value">{{ battleStats().winRate }}%</div>
+      <div class="stat-label">Win Rate</div>
+    </div>
+  </div>
+  
+  <!-- Battle Results Chart -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <h3>Monthly Battle Results</h3>
+      <div class="chart-summary" *ngIf="totalBattlesSummary().total > 0">
+        <span class="summary-win">🏆 Wins: {{ totalBattlesSummary().totalWins }}</span>
+        <span class="summary-loss">💔 Losses: {{ totalBattlesSummary().totalLosses }}</span>
+        <span class="summary-total">⚔️ Total: {{ totalBattlesSummary().total }}</span>
+      </div>
+    </div>
+    <app-battle-chart [battles]="monthlyBattleData()" />
+  </div>
+  
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <div class="severity-filters">
+      @for (option of severityOptions; track option.value) {
+        <button 
+          class="filter-btn"
+          [class.active]="selectedSeverity() === option.value"
+          [style.border-color]="option.color"
+          (click)="setSeverityFilter(option.value)">
+          <span>{{ option.icon }}</span>
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    
+    <div class="action-buttons">
+      <button class="action-btn" (click)="refreshLogs()" [disabled]="loading()">
+        🔄 Refresh
+      </button>
+      <button class="action-btn" (click)="toggleAutoScroll()" [class.active]="autoScroll()">
+        {{ autoScroll() ? '📌 Auto-scroll On' : '📌 Auto-scroll Off' }}
+      </button>
+      <button class="action-btn clear" (click)="clearLogs()">
+        🗑️ Clear
+      </button>
+    </div>
+  </div>
+  
+  <!-- Polling Status Indicator -->
+  <div class="polling-status">
+    <div class="status-dot"></div>
+    <span>Live updates every 5 seconds</span>
+  </div>
+  
+  <!-- Log Container -->
+  <div class="log-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="pokeball-spinner"></div>
+        <p>Loading battle logs...</p>
+      </div>
+    } @else if (groupedLogs().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">⚔️</span>
+        <p>No battle logs yet</p>
+        <p class="empty-hint">Battle results will appear here in real-time</p>
+      </div>
+    } @else {
+      @for (group of groupedLogs(); track group.date) {
+        <div class="log-group">
+          <div class="group-date">{{ group.date }}</div>
+          @for (log of group.logs; track $index) {
+            <div class="log-entry" [class]="getSeverityClass(log.severity)">
+              <div class="log-time">{{ getRelativeTime(log.timestamp) }}</div>
+              <div class="log-icon">{{ severityIcon[log.severity] }}</div>
+              <div class="log-message">{{ log.message }}</div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+  
+  <!-- Footer Info -->
+  <div class="footer-info">
+    <span>📡 Polling interval: 5 seconds</span>
+    <span>📊 Total logs: {{ battleLogs().length }}</span>
+  </div>
+  
+</div>

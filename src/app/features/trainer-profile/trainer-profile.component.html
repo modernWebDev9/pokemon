@@ -1,0 +1,168 @@
+<!-- src/app/features/trainer-profile/trainer-profile.component.html -->
+<div class="profile-container">
+  
+  <div class="profile-header">
+    <h2>Trainer Profile</h2>
+    <p>View and manage your trainer information</p>
+  </div>
+  
+  @if (success()) {
+    <div class="alert success">
+      ✓ {{ success() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="alert error">
+      ⚠ {{ error() }}
+    </div>
+  }
+  
+  <div class="profile-card">
+    
+    <!-- Avatar Section -->
+    <div class="avatar-section">
+      <div class="avatar-wrapper">
+        <div class="avatar-placeholder" [class.editable]="isEditing()" (click)="isEditing() && triggerFileUpload()">
+          @if (getDisplayAvatarUrl()) {
+            <img [src]="getAvatarWithCacheBuster()" 
+                 [alt]="trainer()?.name" 
+                 class="avatar-img" 
+                 (error)="onImageError($event)" />
+          } @else {
+            <div class="avatar-initial">
+              {{ getInitial() }}
+            </div>
+          }
+        </div>
+        
+        <input 
+          type="file" 
+          #fileInput 
+          accept="image/*"
+          (change)="onFileSelected($event)"
+          style="display: none" />
+        
+        @if (isUploading()) {
+          <div class="upload-progress">
+            <div class="progress-spinner"></div>
+            <span>Uploading...</span>
+          </div>
+        }
+        
+        @if (selectedFile() && !isUploading() && isEditing()) {
+          <div class="upload-actions">
+            <button class="upload-confirm" (click)="uploadAvatar()">✓ Confirm</button>
+            <button class="upload-cancel" (click)="cancelUpload()">✗ Cancel</button>
+          </div>
+        }
+        
+        @if (getDisplayAvatarUrl() && !selectedFile() && !isUploading() && isEditing() && !getDisplayAvatarUrl().startsWith('data:')) {
+          <button class="remove-avatar" (click)="removeAvatar()">🗑 Remove</button>
+        }
+      </div>
+    </div>
+    
+    @if (!isEditing()) {
+      <!-- View Mode -->
+      <div class="profile-info">
+        <div class="info-row">
+          <span class="info-label">Name</span>
+          <span class="info-value">{{ trainer()?.name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Region</span>
+          <span class="info-value">{{ trainer()?.region || 'Kanto' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Badges</span>
+          <span class="info-value">
+            <span class="badges">
+              @for (i of [].constructor(trainer()?.badgeCount || 0); track $index) {
+                <span class="badge-icon">🏅</span>
+              }
+            </span>
+            {{ trainer()?.badgeCount || 0 }} / 8
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Rank</span>
+          <span class="info-value rank-value" [class]="getRankClass(trainer()?.rank || 'Trainer')">
+            {{ trainer()?.rank || 'Trainer' }}
+          </span>
+        </div>
+      </div>
+      
+      <button class="edit-btn" (click)="startEdit()">
+        ✏️ Edit Profile
+      </button>
+      
+    } @else {
+      <!-- Edit Mode -->
+      <div class="edit-form">
+        <div class="form-group">
+          <label>Trainer Name</label>
+          <input 
+            type="text" 
+            [(ngModel)]="editName"
+            class="form-input"
+            placeholder="Enter trainer name" />
+        </div>
+        
+        <div class="form-group">
+          <label>Home Region</label>
+          <select [(ngModel)]="editRegion" class="form-input">
+            @for (region of regions; track region) {
+              <option [value]="region">{{ region }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Rank</label>
+          <select [(ngModel)]="editRank" class="form-input">
+            @for (rank of ranks; track rank) {
+              <option [value]="rank">{{ rank }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="edit-actions">
+          <button class="cancel-btn" (click)="cancelEdit()" [disabled]="saving()">
+            Cancel
+          </button>
+          <button class="save-btn" (click)="saveProfile()" [disabled]="saving()">
+            @if (saving()) {
+              <span>Saving...</span>
+            } @else {
+              <span>Save Changes</span>
+            }
+          </button>
+        </div>
+      </div>
+    }
+    
+  </div>
+  
+  <div class="stats-card">
+    <h3>Battle Statistics</h3>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">{{ totalBattles() }}</div>
+        <div class="stat-label">Total Battles</div>
+      </div>
+      <div class="stat-item win">
+        <div class="stat-value">{{ wins() }}</div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat-item loss">
+        <div class="stat-value">{{ losses() }}</div>
+        <div class="stat-label">Losses</div>
+      </div>
+      <div class="stat-item rate">
+        <div class="stat-value">{{ winRate() }}%</div>
+        <div class="stat-label">Win Rate</div>
+      </div>
+    </div>
+  </div>
+  
+</div>

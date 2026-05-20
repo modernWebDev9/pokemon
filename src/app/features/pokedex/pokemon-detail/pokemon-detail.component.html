@@ -1,0 +1,88 @@
+<!-- src/app/features/pokedex/pokemon-detail/pokemon-detail.component.html -->
+<div class="detail-overlay" (click)="onClose()">
+  <div class="detail-panel" (click)="$event.stopPropagation()">
+    
+    <div class="detail-header">
+      <button class="close-btn" (click)="onClose()">✕</button>
+      <div class="pokemon-name-section">
+        <h2>{{ pokemon()?.name }}</h2>
+        <span class="pokemon-id">#{{ pokemon()?.id }}</span>
+      </div>
+    </div>
+    
+    <div class="detail-content" *ngIf="pokemon() as p">
+      
+      <div class="pokemon-sprite-section">
+        <img 
+          [src]="p.sprites.front_default" 
+          [alt]="p.name"
+          class="pokemon-artwork"
+          (error)="onImageError($event)" />
+        <button class="audio-btn" (click)="playAudio()" [class.playing]="isPlaying()">
+          🔊 Play Cry
+        </button>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Height</h4>
+          <p>{{ p.height }} m</p>
+        </div>
+        <div class="info-card">
+          <h4>Weight</h4>
+          <p>{{ p.weight }} kg</p>
+        </div>
+        <div class="info-card">
+          <h4>Total Stats</h4>
+          <p class="total-stats">{{ totalStats() }}</p>
+        </div>
+      </div>
+      
+      <div class="types-section">
+        <h4>Types</h4>
+        <div class="type-badges">
+          <span *ngFor="let type of p.types" class="type-badge" [class]="'type-' + type.toLowerCase()">
+            {{ type }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="stats-section">
+        <h4>Base Stats</h4>
+        <div class="stat-bar" *ngFor="let stat of getStatList()">
+          <div class="stat-label">{{ stat.name }}</div>
+          <div class="stat-bar-container">
+            <div 
+              class="stat-bar-fill"
+              [style.width.%]="getStatPercentage(getStatValue(p.stats, stat.key))"
+              [attr.data-value]="getStatValue(p.stats, stat.key)">
+            </div>
+          </div>
+          <div class="stat-value">{{ getStatValue(p.stats, stat.key) }}</div>
+        </div>
+      </div>
+      
+      <!-- Stats Radar Chart -->
+      <div class="chart-section">
+        <h4>Stats Radar Chart</h4>
+        <app-stats-chart [pokemon]="pokemon()" />
+      </div>
+      
+      <div class="video-section">
+        <h4>Pokémon Video</h4>
+        <div class="video-container">
+          <iframe 
+            *ngIf="videoUrl()"
+            [src]="videoUrl()"
+            frameborder="0"
+            allowfullscreen>
+          </iframe>
+          <div *ngIf="!videoUrl()" class="video-placeholder">
+            <span>🎬 No video available</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>

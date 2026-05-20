@@ -1,0 +1,259 @@
+/* You can add global styles to this file, and also import other style files */
+// src/styles.scss
+
+/* ============================================
+   Modern Design System v2.0
+   ============================================ */
+
+/* CSS Variables - Dark Theme First */
+:root {
+  // Dark theme (default)
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: rgba(20, 20, 20, 0.8);
+  --bg-card-hover: rgba(30, 30, 30, 0.9);
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6b6b6b;
+  
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  
+  --accent-cyan: #00f5ff;
+  --accent-purple: #b300ff;
+  --accent-green: #00ff88;
+  --accent-orange: #ff6b35;
+  --accent-pink: #ff2d75;
+  --accent-yellow: #ffd700;
+  
+  --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-2: linear-gradient(135deg, #00f5ff 0%, #b300ff 100%);
+  --gradient-3: linear-gradient(135deg, #ff2d75 0%, #ff6b35 100%);
+  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: #ffffff;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  
+  --border-light: rgba(0, 0, 0, 0.05);
+  --border-medium: rgba(0, 0, 0, 0.1);
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.12);
+}
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  transition: background var(--transition-base), color var(--transition-base);
+  overflow-x: hidden;
+}
+
+/* Glass Morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-cyan);
+  border-radius: 10px;
+  
+  &:hover {
+    background: var(--accent-purple);
+  }
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: var(--gradient-2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 245, 255, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(0, 245, 255, 0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Utility Classes */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.hover-lift {
+  transition: transform var(--transition-base);
+  
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.hover-glow {
+  transition: all var(--transition-base);
+  
+  &:hover {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+/* Type Badges */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Pokemon Type Colors */
+.type-normal { background: #9099a1; }
+.type-fire { background: #ff9c54; }
+.type-water { background: #4d90ff; }
+.type-electric { background: #f4d23c; color: #1a1a1a; }
+.type-grass { background: #63bc5a; }
+.type-ice { background: #73cec0; color: #1a1a1a; }
+.type-fighting { background: #ce416b; }
+.type-poison { background: #aa6bc8; }
+.type-ground { background: #d97845; }
+.type-flying { background: #93a2e0; }
+.type-psychic { background: #ff6b76; }
+.type-bug { background: #91c12f; }
+.type-rock { background: #c5b059; }
+.type-ghost { background: #5269ad; }
+.type-dragon { background: #0b6dc3; }
+.type-dark { background: #5a5366; }
+.type-steel { background: #5a8ea2; }
+.type-fairy { background: #ec8fe6; color: #1a1a1a; }
+
+/* Loading Animation */
+.pokeball-loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-medium);
+  border-top: 4px solid var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none;
+  }
+}

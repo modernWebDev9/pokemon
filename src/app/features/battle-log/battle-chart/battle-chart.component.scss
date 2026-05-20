@@ -1,0 +1,20 @@
+// src/app/features/battle-log/battle-chart/battle-chart.component.scss
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  background: transparent !important;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* Light theme - ensure transparency */
+[data-theme="light"] .chart-container {
+  background: transparent !important;
+}
+
+/* Dark theme - ensure transparency */
+[data-theme="dark"] .chart-container {
+  background: transparent !important;
+}
