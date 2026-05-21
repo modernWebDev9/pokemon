@@ -389,11 +389,11 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   addPokemon(pokemon: Pokemon): void {
     if (this.selectedPokemonIds().length >= 6) return;
-    
+
     const newMap = new Map(this.selectedPokemonDetails());
     newMap.set(pokemon.id, { nickname: '', heldItem: '' });
     this.selectedPokemonDetails.set(newMap);
-    
+
     this.searchTerm.set('');
     this.showDropdown.set(false);
   }
@@ -478,23 +478,33 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
- * Updates team with optimistic UI updates
- */
-updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): void {
-  console.log('Updating team:', id, updates);
-  this.trainerStore.updateTeam(id, updates).subscribe({
-    next: () => {
-      console.log('Team updated successfully');
-      this.showEditDialog.set(false);
-      this.editingTeam.set(null);
-    },
-    error: (err: any) => {
-      console.error('Update failed:', err);
-      this.error.set(err.message || 'Failed to update team');
-      setTimeout(() => this.error.set(null), 3000);
-    }
-  });
-}
+  * Updates team with optimistic UI updates
+  * Handles both pokemonIds and pokemonDetails updates
+  */
+  updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): void {
+    console.log('Updating team:', id, updates);
+
+    // Create payload with correct field names for the store
+    const updatePayload: any = {};
+    if (updates.name !== undefined) updatePayload.name = updates.name;
+    if (updates.competitiveMode !== undefined) updatePayload.competitiveMode = updates.competitiveMode;
+    if (updates.tier !== undefined) updatePayload.tier = updates.tier;
+    if (updates.pokemonIds !== undefined) updatePayload.pokemonIds = updates.pokemonIds;
+    if (updates.pokemonDetails !== undefined) updatePayload.pokemonDetails = updates.pokemonDetails;
+
+    this.trainerStore.updateTeam(id, updatePayload).subscribe({
+      next: () => {
+        console.log('Team updated successfully');
+        this.showEditDialog.set(false);
+        this.editingTeam.set(null);
+      },
+      error: (err: any) => {
+        console.error('Update failed:', err);
+        this.error.set(err.message || 'Failed to update team');
+        setTimeout(() => this.error.set(null), 3000);
+      }
+    });
+  }
 
   /**
    * Opens delete confirmation modal

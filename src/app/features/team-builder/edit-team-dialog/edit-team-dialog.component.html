@@ -10,7 +10,7 @@
       
       <!-- Team Name Input -->
       <div class="form-group">
-        <label for="editTeamName">Team Name</label>
+        <label for="editTeamName">Team Name *</label>
         <input 
           id="editTeamName"
           type="text" 
@@ -25,10 +25,10 @@
         }
       </div>
       
-      <!-- Pokémon Details Section -->
+      <!-- Pokémon Details Section with Remove Button -->
       @if (selectedPokemonWithDetails().length > 0) {
         <div class="pokemon-edit-section">
-          <label>Pokémon Details</label>
+          <label>Pokémon Details ({{ selectedPokemonWithDetails().length }}/6) * Minimum 1 Pokémon required</label>
           <div class="pokemon-edit-list">
             @for (item of selectedPokemonWithDetails(); track item.id) {
               <div class="pokemon-edit-card">
@@ -40,6 +40,13 @@
                       <span class="pokemon-nickname">({{ item.nickname }})</span>
                     }
                   </div>
+                  <button 
+                    type="button" 
+                    class="remove-pokemon-btn" 
+                    (click)="confirmRemovePokemon(item.id)" 
+                    title="Remove Pokémon">
+                    🗑️
+                  </button>
                 </div>
                 <div class="pokemon-edit-fields">
                   <div class="field-group">
@@ -69,7 +76,23 @@
         </div>
       }
       
-      <!-- Competitive Mode Toggle - Simple checkbox that directly controls the signal -->
+      <!-- Validation Error Message -->
+      @if (!hasMinimumPokemon()) {
+        <div class="validation-error">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">A team must have at least 1 Pokémon. Please add more Pokémon before saving.</span>
+        </div>
+      }
+      
+      <!-- Remove Error Message -->
+      @if (removeErrorMessage()) {
+        <div class="remove-error-message">
+          <span class="error-icon">❌</span>
+          <span class="error-text">{{ removeErrorMessage() }}</span>
+        </div>
+      }
+      
+      <!-- Competitive Mode Toggle -->
       <div class="checkbox-wrapper">
         <label class="checkbox-label">
           <input 
@@ -122,3 +145,23 @@
     
   </div>
 </div>
+
+<!-- Remove Pokémon Confirmation Modal -->
+@if (showRemoveConfirm()) {
+  <div class="remove-confirm-overlay" (click)="closeRemoveConfirm()">
+    <div class="remove-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="remove-confirm-header">
+        <span class="remove-icon">🗑️</span>
+        <h3>Remove Pokémon</h3>
+      </div>
+      <div class="remove-confirm-content">
+        <p>Are you sure you want to remove this Pokémon from the team?</p>
+        <p class="remove-warning">This action cannot be undone.</p>
+      </div>
+      <div class="remove-confirm-footer">
+        <button class="cancel-remove-btn" (click)="closeRemoveConfirm()">Cancel</button>
+        <button class="confirm-remove-btn" (click)="removePokemon()">Remove</button>
+      </div>
+    </div>
+  </div>
+}

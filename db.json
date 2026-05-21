@@ -126,31 +126,25 @@
       "name": "MyTeam",
       "trainer_id": "1",
       "pokemon_ids": [
-        1,
         2,
         3
       ],
       "pokemon_details": [
         {
-          "pokemonId": 1,
-          "nickname": "mmm",
-          "heldItem": "toxic_orb"
-        },
-        {
           "pokemonId": 2,
           "nickname": "ooo",
-          "heldItem": "air_balloon"
+          "heldItem": "rocky_helmet"
         },
         {
           "pokemonId": 3,
           "nickname": "ppp",
-          "heldItem": "air_balloon"
+          "heldItem": "focus_sash"
         }
       ],
-      "created_at": "2026-05-21T01:41:53.060Z",
+      "created_at": "2026-05-21T02:19:19.574Z",
       "competitive_mode": false,
       "tier": null,
-      "id": "BvtcDwyluzI"
+      "id": "sa5zJeBss8U"
     }
   ],
   "battles": [

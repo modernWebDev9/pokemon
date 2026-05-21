@@ -210,6 +210,10 @@ export class TrainerStore {
     );
   }
 
+  /**
+ * Updates an existing team with optimistic UI updates
+ * Handles pokemonIds and pokemonDetails correctly
+ */
   updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): Observable<Team> {
     const currentState = this.stateSubject.value;
     const originalTeam = currentState.teams.find((t: Team) => t.id === id);
@@ -218,6 +222,7 @@ export class TrainerStore {
       return throwError(() => new Error('Team not found'));
     }
 
+    // Create optimistic team with updates
     const optimisticTeam = { ...originalTeam, ...updates };
     this.stateSubject.next({
       ...currentState,
@@ -226,15 +231,19 @@ export class TrainerStore {
       ),
     });
 
+    // Build payload with correct field names for json-server
     const updatePayload: any = {};
     if (updates.name !== undefined) updatePayload.name = updates.name;
     if (updates.competitiveMode !== undefined) updatePayload.competitive_mode = updates.competitiveMode;
     if (updates.tier !== undefined) updatePayload.tier = updates.tier;
+    if (updates.pokemonIds !== undefined) updatePayload.pokemon_ids = updates.pokemonIds;
     if (updates.pokemonDetails !== undefined) updatePayload.pokemon_details = updates.pokemonDetails;
+
+    console.log('Update payload being sent to server:', updatePayload);
 
     return this.http.patch(`${this.apiUrl}/teams/${id}`, updatePayload).pipe(
       map((updatedTeam: any) => {
-        console.log('Team updated:', updatedTeam);
+        console.log('Team updated response:', updatedTeam);
         return this.transformTeam(updatedTeam);
       }),
       tap((realTeam: Team) => {
@@ -248,6 +257,7 @@ export class TrainerStore {
       }),
       catchError((error) => {
         console.error('Update team error:', error);
+        // Rollback optimistic update on error
         this.stateSubject.next({
           ...this.stateSubject.value,
           teams: this.stateSubject.value.teams.map((team: Team) =>
