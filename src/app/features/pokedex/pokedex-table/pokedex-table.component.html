@@ -1,5 +1,75 @@
 <div class="pokedex-container">
   
+  <!-- Sticky Filters Bar -->
+  <div class="sticky-filters-wrapper">
+    <div class="filters-bar">
+      
+      <!-- Search Input -->
+      <div class="filter-item search-item">
+        <span class="filter-icon">🔍</span>
+        <input 
+          type="text" 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event); onSearchChange()"
+          placeholder="Search Pokémon..."
+          class="filter-input" />
+      </div>
+      
+      <!-- Bulk Actions (Compact) -->
+      @if (selectedPokemonIds().size > 0) {
+        <div class="filter-item bulk-actions-compact">
+          <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span>
+          <button class="compact-add-btn" (click)="openAddToTeamModal()" [disabled]="selectedPokemonIds().size > 6">
+            ➕ Add
+          </button>
+          <button class="compact-clear-btn" (click)="clearSelection()">
+            ✕
+          </button>
+        </div>
+      }
+      
+      <!-- Type Filter -->
+      <div class="filter-item">
+        <span class="filter-icon">🎯</span>
+        <select [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event); onTypeChange()" class="filter-select">
+          <option value="">All Types</option>
+          @for (type of availableTypes(); track type) {
+            <option [value]="type">{{ type | titlecase }}</option>
+          }
+        </select>
+      </div>
+      
+      <!-- Stats Range Slider -->
+      <div class="filter-item range-item">
+        <span class="filter-icon">📊</span>
+        <div class="range-controls">
+          <span class="range-value">{{ minStats() }}</span>
+          <input 
+            type="range" 
+            [ngModel]="maxStats()"
+            (ngModelChange)="maxStats.set($event); minStats.set(0); onStatsChange()"
+            min="0" 
+            max="1000" 
+            class="range-input" />
+          <span class="range-value">{{ maxStats() }}</span>
+        </div>
+        <span class="range-label">Total Stats</span>
+      </div>
+      
+      <!-- Page Size Selector -->
+      <div class="filter-item">
+        <span class="filter-icon">📄</span>
+        <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); onPageSizeChange()" class="filter-select">
+          <option [value]="10">10 per page</option>
+          <option [value]="25">25 per page</option>
+          <option [value]="50">50 per page</option>
+          <option [value]="100">100 per page</option>
+        </select>
+      </div>
+      
+    </div>
+  </div>
+  
   <!-- Loading Overlay -->
   @if (loading()) {
     <div class="loading-overlay">
@@ -7,74 +77,6 @@
       <p>Loading Pokémon...</p>
     </div>
   }
-  
-  <!-- Integrated Filters Bar with Compact Bulk Actions -->
-  <div class="filters-bar">
-    
-    <!-- Search Input -->
-    <div class="filter-item search-item">
-      <span class="filter-icon">🔍</span>
-      <input 
-        type="text" 
-        [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event); onSearchChange()"
-        placeholder="Search Pokémon..."
-        class="filter-input" />
-    </div>
-    
-    <!-- Bulk Actions (Compact) -->
-    @if (selectedPokemonIds().size > 0) {
-      <div class="filter-item bulk-actions-compact">
-        <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span>
-        <button class="compact-add-btn" (click)="openAddToTeamModal()" [disabled]="selectedPokemonIds().size > 6">
-          ➕ Add
-        </button>
-        <button class="compact-clear-btn" (click)="clearSelection()">
-          ✕
-        </button>
-      </div>
-    }
-    
-    <!-- Type Filter -->
-    <div class="filter-item">
-      <span class="filter-icon">🎯</span>
-      <select [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event); onTypeChange()" class="filter-select">
-        <option value="">All Types</option>
-        @for (type of availableTypes(); track type) {
-          <option [value]="type">{{ type | titlecase }}</option>
-        }
-      </select>
-    </div>
-    
-    <!-- Stats Range Slider -->
-    <div class="filter-item range-item">
-      <span class="filter-icon">📊</span>
-      <div class="range-controls">
-        <span class="range-value">{{ minStats() }}</span>
-        <input 
-          type="range" 
-          [ngModel]="maxStats()"
-          (ngModelChange)="maxStats.set($event); minStats.set(0); onStatsChange()"
-          min="0" 
-          max="1000" 
-          class="range-input" />
-        <span class="range-value">{{ maxStats() }}</span>
-      </div>
-      <span class="range-label">Total Stats</span>
-    </div>
-    
-    <!-- Page Size Selector -->
-    <div class="filter-item">
-      <span class="filter-icon">📄</span>
-      <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); onPageSizeChange()" class="filter-select">
-        <option [value]="10">10 per page</option>
-        <option [value]="25">25 per page</option>
-        <option [value]="50">50 per page</option>
-        <option [value]="100">100 per page</option>
-      </select>
-    </div>
-    
-  </div>
   
   <!-- Pokémon Table -->
   <div class="table-wrapper">
@@ -152,7 +154,9 @@
             <td class="stat-cell">{{ pokemon.stats.specialAttack }}</td>
             <td class="stat-cell">{{ pokemon.stats.specialDefense }}</td>
             <td class="stat-cell">{{ pokemon.stats.speed }}</td>
-            <td class="total-stat">{{ calculateTotalStats(pokemon) }}</td>
+            <td class="total-stat-cell">
+              <span class="total-stat">{{ calculateTotalStats(pokemon) }}</span>
+            </td>
           </tr>
         } @empty {
           <tr>

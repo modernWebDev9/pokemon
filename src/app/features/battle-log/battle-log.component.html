@@ -285,14 +285,14 @@
           {{ selectedTeam()!.pokemonDetailsList.length }} / 6 Pokémon
         </div>
         <div class="pokemon-grid-2x3">
-          @for (item of selectedTeam()!.pokemonDetailsList; track item.pokemon.id) {
+          @for (item of selectedTeam()!.pokemonDetailsList; track item.id) {
             <div class="pokemon-card">
               <div class="pokemon-image-wrapper">
-                <img [src]="getPokemonSprite(item.pokemon.id)" [alt]="item.pokemon.name" class="pokemon-image">
+                <img [src]="getPokemonSprite(item.id)" [alt]="item.pokemon?.name" class="pokemon-image">
                 <div class="pokemon-order-badge">{{ $index + 1 }}</div>
               </div>
               <div class="pokemon-info-container">
-                <span class="pokemon-name">{{ item.pokemon.name }}</span>
+                <span class="pokemon-name">{{ item.pokemon?.name }}</span>
                 @if (item.nickname) {
                   <span class="pokemon-nickname-badge">✨ "{{ item.nickname }}"</span>
                 }

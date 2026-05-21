@@ -174,37 +174,9 @@
       "name": "MyTeam",
       "trainer_id": "1",
       "pokemon_ids": [
-        1,
-        8,
         9
       ],
       "pokemon_details": [
-        {
-          "pokemonId": 1,
-          "nickname": "",
-          "heldItem": "",
-          "evs": {
-            "hp": 0,
-            "attack": 0,
-            "defense": 0,
-            "specialAttack": 0,
-            "specialDefense": 0,
-            "speed": 0
-          }
-        },
-        {
-          "pokemonId": 8,
-          "nickname": "",
-          "heldItem": "",
-          "evs": {
-            "hp": 0,
-            "attack": 0,
-            "defense": 0,
-            "specialAttack": 0,
-            "specialDefense": 0,
-            "speed": 0
-          }
-        },
         {
           "pokemonId": 9,
           "nickname": "",
