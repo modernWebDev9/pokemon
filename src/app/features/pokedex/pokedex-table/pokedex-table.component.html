@@ -18,9 +18,9 @@
       <!-- Bulk Actions (Compact) -->
       @if (selectedPokemonIds().size > 0) {
         <div class="filter-item bulk-actions-compact">
-          <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span>
+          <!-- <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span> -->
           <button class="compact-add-btn" (click)="openAddToTeamModal()" [disabled]="selectedPokemonIds().size > 6">
-            ➕ Add
+            ➕ Add to Team
           </button>
           <button class="compact-clear-btn" (click)="clearSelection()">
             ✕
