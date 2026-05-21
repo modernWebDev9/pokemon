@@ -1624,3 +1624,143 @@ select.form-input option {
   }
 }
 
+/* Warning Banner */
+.warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  
+  .warning-icon {
+    font-size: 1.2rem;
+  }
+  
+  .warning-text {
+    font-size: 0.8rem;
+    color: #f59e0b;
+  }
+}
+
+/* Invalid input styling */
+.form-input.invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.checking-hint {
+  font-size: 0.7rem;
+  color: #00f5ff;
+  margin-top: 6px;
+  margin-left: 16px;
+}
+
+/* Team Preview */
+.team-preview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 16px;
+  
+  .preview-sprite {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    background: rgba(0, 245, 255, 0.05);
+    border-radius: 50%;
+    padding: 2px;
+  }
+  
+  .preview-more {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #a0a0a0);
+    margin-left: 4px;
+  }
+}
+
+/* Pokémon Info in Subform Header */
+.pokemon-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  
+  .pokemon-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary, white);
+    text-transform: capitalize;
+  }
+  
+  .pokemon-nickname {
+    font-size: 0.8rem;
+    color: #00f5ff;
+    font-style: italic;
+  }
+}
+
+/* Nickname and Held Item Badges in Modal */
+.pokemon-nickname-badge {
+  font-size: 0.65rem;
+  color: #00f5ff;
+  font-style: italic;
+  margin-top: 4px;
+  display: block;
+}
+
+.pokemon-helditem-badge {
+  font-size: 0.6rem;
+  color: var(--text-secondary, #a0a0a0);
+  background: rgba(0, 245, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  .pokemon-info .pokemon-name {
+    color: #1a1a1a;
+  }
+  
+  .preview-sprite {
+    background: rgba(102, 126, 234, 0.05);
+  }
+  
+  .pokemon-nickname-badge {
+    color: #667eea;
+  }
+  
+  .pokemon-helditem-badge {
+    background: rgba(102, 126, 234, 0.1);
+    color: #666;
+  }
+  
+  .warning-banner {
+    background: rgba(245, 158, 11, 0.08);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .team-preview {
+    margin-left: 0;
+    margin-right: 0;
+    justify-content: center;
+  }
+  
+  .team-card {
+    flex-wrap: wrap;
+  }
+  
+  .pokemon-info {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

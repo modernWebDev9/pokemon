@@ -28,7 +28,7 @@
       <div class="form-card">
         <h3>Create New Team</h3>
         
-        <!-- Team Name Input -->
+        <!-- Team Name Input with Async Validation -->
         <div class="form-group">
           <label for="teamName">Team Name *</label>
           <input 
@@ -37,13 +37,46 @@
             [ngModel]="teamName()"
             (ngModelChange)="teamName.set($event)"
             placeholder="Enter team name (3-30 characters)"
-            class="form-input" />
+            class="form-input"
+            [class.invalid]="teamName().length > 0 && (!isTeamNameValid() || !isTeamNameUnique())" />
+          
           @if (teamName().length > 0 && !isTeamNameValid()) {
             <div class="error-hint">
               Team name must be 3-30 characters
             </div>
           }
+          @if (teamName().length >= 3 && !isTeamNameUnique() && !isCheckingName()) {
+            <div class="error-hint">
+              Team name already exists. Please choose another name.
+            </div>
+          }
+          @if (isCheckingName()) {
+            <div class="checking-hint">
+              Checking availability...
+            </div>
+          }
         </div>
+
+        <!-- Selected Pokémon Chips (Moved to TOP) -->
+        @if (selectedPokemonIds().length > 0) {
+          <div class="selected-pokemon-section">
+            <label>Selected Pokémon ({{ selectedPokemonIds().length }}/6):</label>
+            <div class="pokemon-chips">
+              @for (item of selectedPokemonWithDetails(); track item.id) {
+                <div class="chip">
+                  <img [src]="getPokemonSprite(item.id)" width="30" height="30" />
+                  <div class="chip-info">
+                    <span class="chip-name">{{ item.pokemon?.name }}</span>
+                    @if (item.nickname) {
+                      <span class="chip-nickname">"{{ item.nickname }}"</span>
+                    }
+                  </div>
+                  <button class="chip-remove" (click)="removePokemon(item.id)">✕</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
         
         <!-- Pokémon Search Autocomplete -->
         <div class="form-group">
@@ -96,13 +129,18 @@
         <!-- Pokémon Sub-forms (Nickname & Held Item) -->
         @if (selectedPokemonWithDetails().length > 0) {
           <div class="pokemon-subforms-section">
-            <label>Pokémon Details</label>
+            <label>Pokémon Details (Nickname & Held Item)</label>
             <div class="pokemon-subforms">
               @for (item of selectedPokemonWithDetails(); track item.id) {
                 <div class="pokemon-subform">
                   <div class="subform-header">
                     <img [src]="getPokemonSprite(item.id)" width="40" height="40" />
-                    <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+                    <div class="pokemon-info">
+                      <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+                      @if (item.nickname) {
+                        <span class="pokemon-nickname">({{ item.nickname }})</span>
+                      }
+                    </div>
                     <button type="button" class="remove-subform" (click)="removePokemon(item.id)">✕</button>
                   </div>
                   <div class="subform-fields">
@@ -130,6 +168,14 @@
                 </div>
               }
             </div>
+          </div>
+        }
+
+        <!-- Type Coverage Warning Banner -->
+        @if (typeCoverageWarning().show) {
+          <div class="warning-banner">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">{{ typeCoverageWarning().message }}</span>
           </div>
         }
 
@@ -189,18 +235,8 @@
         <!-- Visual Separator -->
         <div class="form-separator"></div>
         
-        <!-- Type Coverage Analysis -->
-        @if (selectedPokemonDetails().length > 0) {
-          <div class="coverage-card" [class.warning]="!typeCoverage().isBalanced">
-            <strong>Type Coverage:</strong> {{ typeCoverage().types.join(', ') || 'None' }}
-            <span class="coverage-status">
-              {{ typeCoverage().message }}
-            </span>
-          </div>
-        }
-        
         <!-- Type Distribution Chart -->
-        @if (selectedPokemonDetails().length > 0) {
+        @if (selectedPokemonSimple().length > 0) {
           <div class="chart-section">
             <h4>Type Distribution</h4>
             <app-type-distribution-chart [types]="typeDistribution()" />
@@ -236,6 +272,14 @@
                     <span class="tier-badge">{{ team.tier }}</span>
                   }
                 </div>
+                <div class="team-preview">
+                  @for (pokemonId of team.pokemonIds.slice(0, 3); track pokemonId) {
+                    <img [src]="getPokemonSprite(pokemonId)" width="24" height="24" class="preview-sprite" />
+                  }
+                  @if (team.pokemonIds.length > 3) {
+                    <span class="preview-more">+{{ team.pokemonIds.length - 3 }}</span>
+                  }
+                </div>
                 <div class="team-actions" (click)="$event.stopPropagation()">
                   <button class="edit-btn" (click)="editTeam(team)">Edit</button>
                   <button class="delete-btn" (click)="openDeleteConfirmModal(team)">Delete</button>
@@ -253,6 +297,8 @@
   @if (showEditDialog() && editingTeam()) {
     <app-edit-team-dialog
       [team]="editingTeam()!"
+      [allPokemon]="allPokemon()"
+      [heldItems]="heldItems"
       (save)="updateTeam(editingTeam()!.id, $event)"
       (close)="showEditDialog.set(false); editingTeam.set(null)" />
   }
@@ -298,10 +344,16 @@
           {{ getTeamPokemonDetails(selectedTeam()!).length }} Pokémon
         </div>
         <div class="pokemon-grid">
-          @for (pokemon of getTeamPokemonDetails(selectedTeam()!); track pokemon.id) {
+          @for (item of getTeamPokemonDetails(selectedTeam()!); track item.id) {
             <div class="pokemon-card">
-              <img [src]="getPokemonSprite(pokemon.id)" [alt]="pokemon.name" class="pokemon-image">
-              <span class="pokemon-name">{{ pokemon.name }}</span>
+              <img [src]="getPokemonSprite(item.id)" [alt]="item.pokemon?.name" class="pokemon-image">
+              <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+              @if (item.nickname) {
+                <span class="pokemon-nickname-badge">"{{ item.nickname }}"</span>
+              }
+              @if (item.heldItem) {
+                <span class="pokemon-helditem-badge">{{ getHeldItemLabel(item.heldItem) }}</span>
+              }
             </div>
           } @empty {
             <div class="no-pokemon">
