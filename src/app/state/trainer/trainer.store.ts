@@ -16,6 +16,14 @@ export interface PokemonDetail {
   pokemonId: number;
   nickname: string;
   heldItem: string;
+  evs?: {           // ← EV spread data (optional)
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+  };
 }
 
 export interface Team {

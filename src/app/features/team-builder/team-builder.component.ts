@@ -1,7 +1,7 @@
 /**
  * Team Builder Component - Advanced form for creating and managing Pokémon teams
  * Implements autocomplete search, type coverage analysis, and optimistic updates
- * Each Pokémon can have a nickname and held item
+ * Each Pokémon can have a nickname, held item, and EV spread (must sum to 510)
  */
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -39,6 +39,22 @@ const HELD_ITEMS = [
   { value: 'light_clay', label: 'Light Clay' }
 ];
 
+export interface EVSpread {
+  hp: number;
+  attack: number;
+  defense: number;
+  specialAttack: number;
+  specialDefense: number;
+  speed: number;
+}
+
+export interface PokemonWithEVs {
+  pokemonId: number;
+  nickname: string;
+  heldItem: string;
+  evs: EVSpread;
+}
+
 @Component({
   selector: 'app-team-builder',
   standalone: true,
@@ -58,7 +74,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
 
   // Form state signals
   teamName = signal('');
-  selectedPokemonDetails = signal<Map<number, { nickname: string; heldItem: string }>>(new Map());
+  selectedPokemonEVs = signal<Map<number, PokemonWithEVs>>(new Map());
   competitiveMode = signal(false);
   selectedTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>('OU');
 
@@ -92,6 +108,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
 
   // Held items list for dropdown
   heldItems = HELD_ITEMS;
+
+  // Maximum EV total
+  readonly MAX_EV_TOTAL = 510;
+  readonly MAX_EV_PER_STAT = 252;
 
   constructor() {
     // Async validator for team name uniqueness
@@ -167,55 +187,115 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Initializes default EV spread for a Pokémon
+   */
+  private getDefaultEVs(): EVSpread {
+    return { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 };
+  }
+
+  /**
+   * Gets EV spread for a Pokémon
+   */
+  getPokemonEVs(pokemonId: number): EVSpread {
+    const data = this.selectedPokemonEVs().get(pokemonId);
+    return data?.evs || this.getDefaultEVs();
+  }
+
+  /**
    * Gets nickname for a Pokémon
    */
   getPokemonNickname(pokemonId: number): string {
-    return this.selectedPokemonDetails().get(pokemonId)?.nickname || '';
+    return this.selectedPokemonEVs().get(pokemonId)?.nickname || '';
   }
 
   /**
    * Gets held item for a Pokémon
    */
   getPokemonHeldItem(pokemonId: number): string {
-    return this.selectedPokemonDetails().get(pokemonId)?.heldItem || '';
+    return this.selectedPokemonEVs().get(pokemonId)?.heldItem || '';
+  }
+
+  /**
+   * Updates EV value for a Pokémon
+   */
+  updateEV(pokemonId: number, stat: keyof EVSpread, value: number): void {
+    const currentData = this.selectedPokemonEVs().get(pokemonId);
+    if (!currentData) return;
+
+    const newEVs = { ...currentData.evs, [stat]: Math.min(value, this.MAX_EV_PER_STAT) };
+    const newMap = new Map(this.selectedPokemonEVs());
+    newMap.set(pokemonId, { ...currentData, evs: newEVs });
+    this.selectedPokemonEVs.set(newMap);
   }
 
   /**
    * Updates nickname for a Pokémon
    */
   updateNickname(pokemonId: number, nickname: string): void {
-    const newMap = new Map(this.selectedPokemonDetails());
-    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '' };
-    newMap.set(pokemonId, { ...existing, nickname });
-    this.selectedPokemonDetails.set(newMap);
+    const currentData = this.selectedPokemonEVs().get(pokemonId);
+    if (!currentData) return;
+    
+    const newMap = new Map(this.selectedPokemonEVs());
+    newMap.set(pokemonId, { ...currentData, nickname });
+    this.selectedPokemonEVs.set(newMap);
   }
 
   /**
    * Updates held item for a Pokémon
    */
   updateHeldItem(pokemonId: number, heldItem: string): void {
-    const newMap = new Map(this.selectedPokemonDetails());
-    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '' };
-    newMap.set(pokemonId, { ...existing, heldItem });
-    this.selectedPokemonDetails.set(newMap);
+    const currentData = this.selectedPokemonEVs().get(pokemonId);
+    if (!currentData) return;
+    
+    const newMap = new Map(this.selectedPokemonEVs());
+    newMap.set(pokemonId, { ...currentData, heldItem });
+    this.selectedPokemonEVs.set(newMap);
+  }
+
+  /**
+   * Gets total EV sum for a Pokémon
+   */
+  getEVTotal(pokemonId: number): number {
+    const evs = this.getPokemonEVs(pokemonId);
+    return evs.hp + evs.attack + evs.defense + evs.specialAttack + evs.specialDefense + evs.speed;
+  }
+
+  /**
+   * Checks if EV spread is valid for a Pokémon
+   */
+  isEVValid(pokemonId: number): boolean {
+    const total = this.getEVTotal(pokemonId);
+    return total === this.MAX_EV_TOTAL;
+  }
+
+  /**
+   * Gets EV validation message for a Pokémon
+   */
+  getEVValidationMessage(pokemonId: number): string {
+    const total = this.getEVTotal(pokemonId);
+    if (total === this.MAX_EV_TOTAL) return '';
+    if (total < this.MAX_EV_TOTAL) return `Total: ${total}/510 (Need ${this.MAX_EV_TOTAL - total} more)`;
+    return `Total: ${total}/510 (Exceeds by ${total - this.MAX_EV_TOTAL})`;
   }
 
   /**
    * Gets selected Pokémon IDs
    */
   selectedPokemonIds = computed(() => {
-    return Array.from(this.selectedPokemonDetails().keys());
+    return Array.from(this.selectedPokemonEVs().keys());
   });
 
   /**
-   * Gets selected Pokémon with full data
+   * Gets selected Pokémon with full data (EVs, nickname, held item)
    */
   selectedPokemonWithDetails = computed(() => {
-    const detailsMap = this.selectedPokemonDetails();
-    return Array.from(detailsMap.entries()).map(([id, details]) => ({
+    const evsMap = this.selectedPokemonEVs();
+    return Array.from(evsMap.entries()).map(([id, data]) => ({
       id,
-      nickname: details.nickname,
-      heldItem: details.heldItem,
+      pokemonId: id,
+      nickname: data.nickname,
+      heldItem: data.heldItem,
+      evs: data.evs,
       pokemon: this.allPokemon().find(p => p.id === id)
     })).filter(item => item.pokemon);
   });
@@ -225,6 +305,15 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   selectedPokemonSimple = computed(() => {
     return this.selectedPokemonWithDetails().map(item => item.pokemon).filter(p => p);
+  });
+
+  /**
+   * Checks if all EVs are valid (for competitive mode)
+   */
+  allEVsValid = computed(() => {
+    if (!this.competitiveMode()) return true;
+    const pokemonIds = this.selectedPokemonIds();
+    return pokemonIds.every(id => this.isEVValid(id));
   });
 
   /**
@@ -248,7 +337,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   getTeamPokemonDetails(team: Team): { id: number; nickname: string; heldItem: string; pokemon: Pokemon | undefined }[] {
     return team.pokemonIds.map(id => {
-      const detail = team.pokemonDetails.find(d => d.pokemonId === id);
+      const detail = team.pokemonDetails?.find(d => d.pokemonId === id);
       return {
         id,
         nickname: detail?.nickname || '',
@@ -295,6 +384,10 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   canSubmit = computed(() => {
     if (this.competitiveMode() && !this.selectedTier()) {
+      return false;
+    }
+    // Check EV validity when competitive mode is on
+    if (this.competitiveMode() && !this.allEVsValid()) {
       return false;
     }
     const hasTeamNameError = !this.isTeamNameValid() || !this.isTeamNameUnique();
@@ -385,15 +478,20 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Adds Pokémon to team selection
+   * Adds Pokémon to team selection with default EV spread
    */
   addPokemon(pokemon: Pokemon): void {
     if (this.selectedPokemonIds().length >= 6) return;
-
-    const newMap = new Map(this.selectedPokemonDetails());
-    newMap.set(pokemon.id, { nickname: '', heldItem: '' });
-    this.selectedPokemonDetails.set(newMap);
-
+    
+    const newMap = new Map(this.selectedPokemonEVs());
+    newMap.set(pokemon.id, {
+      pokemonId: pokemon.id,
+      nickname: '',
+      heldItem: '',
+      evs: this.getDefaultEVs()
+    });
+    this.selectedPokemonEVs.set(newMap);
+    
     this.searchTerm.set('');
     this.showDropdown.set(false);
   }
@@ -402,9 +500,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    * Removes Pokémon from team selection
    */
   removePokemon(pokemonId: number): void {
-    const newMap = new Map(this.selectedPokemonDetails());
+    const newMap = new Map(this.selectedPokemonEVs());
     newMap.delete(pokemonId);
-    this.selectedPokemonDetails.set(newMap);
+    this.selectedPokemonEVs.set(newMap);
   }
 
   /**
@@ -424,7 +522,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Creates new team with all details including pokemonDetails
+   * Creates new team with all details including EVs
    */
   createTeam(): void {
     if (!this.canSubmit()) return;
@@ -433,10 +531,11 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const pokemonIds = this.selectedPokemonIds();
-    const pokemonDetails: PokemonDetail[] = Array.from(this.selectedPokemonDetails().entries()).map(([pokemonId, details]) => ({
+    const pokemonDetails: any[] = Array.from(this.selectedPokemonEVs().entries()).map(([pokemonId, data]) => ({
       pokemonId,
-      nickname: details.nickname,
-      heldItem: details.heldItem
+      nickname: data.nickname,
+      heldItem: data.heldItem,
+      evs: data.evs
     }));
 
     const teamData: CreateTeamInput = {
@@ -455,7 +554,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
 
         // Reset form
         this.teamName.set('');
-        this.selectedPokemonDetails.set(new Map());
+        this.selectedPokemonEVs.set(new Map());
         this.competitiveMode.set(false);
         this.selectedTier.set('OU');
 
@@ -478,13 +577,11 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-  * Updates team with optimistic UI updates
-  * Handles both pokemonIds and pokemonDetails updates
-  */
+   * Updates team with optimistic UI updates
+   */
   updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): void {
     console.log('Updating team:', id, updates);
 
-    // Create payload with correct field names for the store
     const updatePayload: any = {};
     if (updates.name !== undefined) updatePayload.name = updates.name;
     if (updates.competitiveMode !== undefined) updatePayload.competitiveMode = updates.competitiveMode;

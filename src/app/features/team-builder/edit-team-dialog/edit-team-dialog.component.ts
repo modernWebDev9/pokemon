@@ -2,6 +2,7 @@
  * Edit Team Dialog Component - Modal dialog for editing team details
  * Allows editing team name, competitive mode, battle tier, and Pokémon nicknames/held items
  * Also allows removing Pokémon from the team (minimum 1 Pokémon required)
+ * Supports EV spread editing when competitive mode is on
  */
 import { Component, input, output, signal, computed, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -9,11 +10,21 @@ import { FormsModule } from '@angular/forms';
 import { Team, PokemonDetail } from '../../../state/trainer/trainer.store';
 import { Pokemon } from '../../../state/pokemon/pokemon.store';
 
+export interface EVSpread {
+  hp: number;
+  attack: number;
+  defense: number;
+  specialAttack: number;
+  specialDefense: number;
+  speed: number;
+}
+
 interface PokemonWithDetails {
   id: number;
   pokemonId: number;
   nickname: string;
   heldItem: string;
+  evs: EVSpread;
   pokemon: Pokemon | undefined;
 }
 
@@ -36,8 +47,8 @@ export class EditTeamDialogComponent implements OnInit {
   editCompetitiveMode = signal(false);
   editTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>(null);
   
-  // Pokémon details editing - stores nickname and held item for each Pokémon
-  pokemonDetails = signal<Map<number, { nickname: string; heldItem: string }>>(new Map());
+  // Pokémon details editing - stores nickname, held item, and EV spread for each Pokémon
+  pokemonDetails = signal<Map<number, { nickname: string; heldItem: string; evs: EVSpread }>>(new Map());
   
   // Track current Pokémon IDs in the team (for display and removal)
   currentPokemonIds = signal<number[]>([]);
@@ -46,6 +57,10 @@ export class EditTeamDialogComponent implements OnInit {
   pokemonToRemove = signal<number | null>(null);
   showRemoveConfirm = signal(false);
   removeErrorMessage = signal<string | null>(null);
+  
+  // EV Spread limits
+  readonly MAX_EV_TOTAL = 510;
+  readonly MAX_EV_PER_STAT = 252;
   
   ngOnInit(): void {
     const team = this.team();
@@ -57,18 +72,24 @@ export class EditTeamDialogComponent implements OnInit {
     this.currentPokemonIds.set([...team.pokemonIds]);
     
     // Load existing Pokémon details from team
-    const detailsMap = new Map<number, { nickname: string; heldItem: string }>();
+    const detailsMap = new Map<number, { nickname: string; heldItem: string; evs: EVSpread }>();
+    
     if (team.pokemonDetails && team.pokemonDetails.length > 0) {
       team.pokemonDetails.forEach(detail => {
         detailsMap.set(detail.pokemonId, {
           nickname: detail.nickname || '',
-          heldItem: detail.heldItem || ''
+          heldItem: detail.heldItem || '',
+          evs: detail.evs || { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 }
         });
       });
     } else {
       // Initialize empty details for each Pokémon in the team
       team.pokemonIds.forEach(pokemonId => {
-        detailsMap.set(pokemonId, { nickname: '', heldItem: '' });
+        detailsMap.set(pokemonId, {
+          nickname: '',
+          heldItem: '',
+          evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 }
+        });
       });
     }
     this.pokemonDetails.set(detailsMap);
@@ -84,12 +105,13 @@ export class EditTeamDialogComponent implements OnInit {
     
     return pokemonIds.map(pokemonId => {
       const pokemon = allPokemonList.find(p => p.id === pokemonId);
-      const details = detailsMap.get(pokemonId) || { nickname: '', heldItem: '' };
+      const details = detailsMap.get(pokemonId) || { nickname: '', heldItem: '', evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } };
       return {
         id: pokemonId,
         pokemonId: pokemonId,
         nickname: details.nickname,
         heldItem: details.heldItem,
+        evs: details.evs,
         pokemon: pokemon
       };
     }).filter(item => item.pokemon);
@@ -117,11 +139,44 @@ export class EditTeamDialogComponent implements OnInit {
   }
   
   /**
+   * Gets EV spread for a Pokémon
+   */
+  getPokemonEVs(pokemonId: number): EVSpread {
+    return this.pokemonDetails().get(pokemonId)?.evs || { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 };
+  }
+  
+  /**
+   * Gets total EV sum for a Pokémon
+   */
+  getEVTotal(pokemonId: number): number {
+    const evs = this.getPokemonEVs(pokemonId);
+    return evs.hp + evs.attack + evs.defense + evs.specialAttack + evs.specialDefense + evs.speed;
+  }
+  
+  /**
+   * Checks if EV spread is valid for a Pokémon
+   */
+  isEVValid(pokemonId: number): boolean {
+    const total = this.getEVTotal(pokemonId);
+    return total === this.MAX_EV_TOTAL;
+  }
+  
+  /**
+   * Gets EV validation message for a Pokémon
+   */
+  getEVValidationMessage(pokemonId: number): string {
+    const total = this.getEVTotal(pokemonId);
+    if (total === this.MAX_EV_TOTAL) return '';
+    if (total < this.MAX_EV_TOTAL) return `Total: ${total}/510 (Need ${this.MAX_EV_TOTAL - total} more)`;
+    return `Total: ${total}/510 (Exceeds by ${total - this.MAX_EV_TOTAL})`;
+  }
+  
+  /**
    * Updates nickname for a Pokémon
    */
   updateNickname(pokemonId: number, nickname: string): void {
     const newMap = new Map(this.pokemonDetails());
-    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '' };
+    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '', evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } };
     newMap.set(pokemonId, { ...existing, nickname });
     this.pokemonDetails.set(newMap);
   }
@@ -131,8 +186,19 @@ export class EditTeamDialogComponent implements OnInit {
    */
   updateHeldItem(pokemonId: number, heldItem: string): void {
     const newMap = new Map(this.pokemonDetails());
-    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '' };
+    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '', evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } };
     newMap.set(pokemonId, { ...existing, heldItem });
+    this.pokemonDetails.set(newMap);
+  }
+  
+  /**
+   * Updates EV value for a Pokémon
+   */
+  updateEV(pokemonId: number, stat: keyof EVSpread, value: number): void {
+    const newMap = new Map(this.pokemonDetails());
+    const existing = newMap.get(pokemonId) || { nickname: '', heldItem: '', evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } };
+    const newEVs = { ...existing.evs, [stat]: Math.min(Math.max(value, 0), this.MAX_EV_PER_STAT) };
+    newMap.set(pokemonId, { ...existing, evs: newEVs });
     this.pokemonDetails.set(newMap);
   }
   
@@ -140,17 +206,14 @@ export class EditTeamDialogComponent implements OnInit {
    * Shows remove confirmation modal with validation
    */
   confirmRemovePokemon(pokemonId: number): void {
-    // Clear any previous error message
     this.removeErrorMessage.set(null);
     
-    // Check if removal would make team empty
     if (this.currentPokemonIds().length <= 1) {
       this.removeErrorMessage.set('❌ Cannot remove the last Pokémon. A team must have at least 1 Pokémon.');
       setTimeout(() => this.removeErrorMessage.set(null), 3000);
       return;
     }
     
-    // Set the Pokémon to remove and show modal
     this.pokemonToRemove.set(pokemonId);
     this.showRemoveConfirm.set(true);
   }
@@ -164,13 +227,12 @@ export class EditTeamDialogComponent implements OnInit {
   }
   
   /**
-   * Removes a Pokémon from the team - UPDATES BOTH IDs AND DETAILS MAP
+   * Removes a Pokémon from the team
    */
   removePokemon(): void {
     const pokemonId = this.pokemonToRemove();
     if (pokemonId === null) return;
     
-    // Double-check that removal would not make team empty
     if (this.currentPokemonIds().length <= 1) {
       this.removeErrorMessage.set('❌ Cannot remove the last Pokémon. A team must have at least 1 Pokémon.');
       this.closeRemoveConfirm();
@@ -178,16 +240,13 @@ export class EditTeamDialogComponent implements OnInit {
       return;
     }
     
-    // Remove from current Pokémon IDs list
     const newPokemonIds = this.currentPokemonIds().filter(id => id !== pokemonId);
     this.currentPokemonIds.set(newPokemonIds);
     
-    // Remove from details map
     const newDetailsMap = new Map(this.pokemonDetails());
     newDetailsMap.delete(pokemonId);
     this.pokemonDetails.set(newDetailsMap);
     
-    // Close confirmation modal
     this.closeRemoveConfirm();
   }
   
@@ -208,35 +267,41 @@ export class EditTeamDialogComponent implements OnInit {
   }
   
   /**
+   * Checks if all EVs are valid (for competitive mode)
+   */
+  allEVsValid = computed(() => {
+    if (!this.editCompetitiveMode()) return true;
+    const pokemonIds = this.currentPokemonIds();
+    return pokemonIds.every(id => this.isEVValid(id));
+  });
+  
+  /**
    * Validates form inputs
-   * Team name: 3-30 characters
-   * Team must have at least 1 Pokémon
    */
   isValid = computed(() => {
     const name = this.editName().trim();
     const nameValid = name.length >= 3 && name.length <= 30;
     const hasPokemon = this.currentPokemonIds().length >= 1;
-    return nameValid && hasPokemon;
+    const evsValid = this.allEVsValid();
+    return nameValid && hasPokemon && evsValid;
   });
   
   /**
-   * Saves changes including Pokémon details and removed Pokémon
+   * Saves changes including Pokémon details and EV spreads
    */
   onSave(): void {
     if (!this.isValid()) return;
     
-    // Get current Pokémon IDs (after removals)
     const currentPokemonIds = this.currentPokemonIds();
     const currentDetailsMap = this.pokemonDetails();
     
-    // Convert Pokémon details map to array for DB storage
     const pokemonDetailsArray: PokemonDetail[] = Array.from(currentDetailsMap.entries()).map(([pokemonId, details]) => ({
       pokemonId,
       nickname: details.nickname,
-      heldItem: details.heldItem
+      heldItem: details.heldItem,
+      evs: details.evs
     }));
     
-    // Create updates with BOTH fields
     const updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>> = {
       name: this.editName().trim(),
       competitiveMode: this.editCompetitiveMode(),

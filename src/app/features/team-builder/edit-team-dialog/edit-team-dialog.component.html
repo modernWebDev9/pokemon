@@ -70,13 +70,93 @@
                     </select>
                   </div>
                 </div>
+                
+                <!-- EV Spread Section (only when competitive mode is ON) -->
+                @if (editCompetitiveMode()) {
+                  <div class="ev-spread-section">
+                    <div class="ev-spread-header">
+                      <span class="ev-spread-title">📊 EV Spread (Total: {{ getEVTotal(item.id) }}/510)</span>
+                      @if (!isEVValid(item.id)) {
+                        <span class="ev-spread-warning">⚠️ {{ getEVValidationMessage(item.id) }}</span>
+                      }
+                      @if (isEVValid(item.id)) {
+                        <span class="ev-spread-success">✓ Valid spread!</span>
+                      }
+                    </div>
+                    <div class="ev-spread-grid">
+                      <div class="ev-stat">
+                        <label>HP</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.hp"
+                          (ngModelChange)="updateEV(item.id, 'hp', $event)"
+                          class="ev-input" />
+                      </div>
+                      <div class="ev-stat">
+                        <label>Attack</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.attack"
+                          (ngModelChange)="updateEV(item.id, 'attack', $event)"
+                          class="ev-input" />
+                      </div>
+                      <div class="ev-stat">
+                        <label>Defense</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.defense"
+                          (ngModelChange)="updateEV(item.id, 'defense', $event)"
+                          class="ev-input" />
+                      </div>
+                      <div class="ev-stat">
+                        <label>Sp. Atk</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.specialAttack"
+                          (ngModelChange)="updateEV(item.id, 'specialAttack', $event)"
+                          class="ev-input" />
+                      </div>
+                      <div class="ev-stat">
+                        <label>Sp. Def</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.specialDefense"
+                          (ngModelChange)="updateEV(item.id, 'specialDefense', $event)"
+                          class="ev-input" />
+                      </div>
+                      <div class="ev-stat">
+                        <label>Speed</label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          [max]="252"
+                          [ngModel]="item.evs.speed"
+                          (ngModelChange)="updateEV(item.id, 'speed', $event)"
+                          class="ev-input" />
+                      </div>
+                    </div>
+                    <div class="ev-hint">
+                      💡 EV total must equal 510. Each stat max: 252
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>
         </div>
       }
       
-      <!-- Validation Error Message -->
+      <!-- Validation Error Messages -->
       @if (!hasMinimumPokemon()) {
         <div class="validation-error">
           <span class="error-icon">⚠️</span>
@@ -84,7 +164,13 @@
         </div>
       }
       
-      <!-- Remove Error Message -->
+      @if (editCompetitiveMode() && !allEVsValid() && hasMinimumPokemon()) {
+        <div class="validation-error ev-error">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">All Pokémon must have exactly 510 EV total before saving.</span>
+        </div>
+      }
+      
       @if (removeErrorMessage()) {
         <div class="remove-error-message">
           <span class="error-icon">❌</span>
