@@ -408,7 +408,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     const hasWeakness = types.size < 3;
     return {
       show: pokemons.length > 0 && hasWeakness,
-      message: hasWeakness ? '⚠️ Your team has limited type coverage. Consider adding more type variety!' : ''
+      message: hasWeakness ? 'Your team has limited type coverage. Consider adding more type variety!' : ''
     };
   });
 

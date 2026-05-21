@@ -94,6 +94,12 @@ export class TrainerStore {
     this.setCurrentTrainer('1');
   }
 
+  /**
+   * Loads trainer data from the API by trainer ID
+   *
+   * @param trainerId - The ID of the trainer to load
+   * @returns Observable of the loaded Trainer or null if not found
+   */
   loadTrainer(trainerId: string): Observable<Trainer | null> {
     this.setLoading(true);
     return this.http.get<any[]>(`${this.apiUrl}/trainers`).pipe(
@@ -117,6 +123,11 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Loads all teams for the current trainer from the API
+   *
+   * @returns Observable of the loaded Team array
+   */
   loadTeams(): Observable<Team[]> {
     const trainerId = this.stateSubject.value.currentTrainerId;
     return this.http.get<any[]>(`${this.apiUrl}/teams`).pipe(
@@ -138,6 +149,11 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Loads all battles for the current trainer from the API
+   *
+   * @returns Observable of the loaded Battle array
+   */
   loadBattles(): Observable<Battle[]> {
     const trainerId = this.stateSubject.value.currentTrainerId;
     return this.http.get<any[]>(`${this.apiUrl}/battles`).pipe(
@@ -159,6 +175,14 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Creates a new team with optimistic UI update.
+   * Immediately adds a temporary team to the state, then replaces it with the
+   * server response. Rolls back on error.
+   *
+   * @param teamData - Input data for the new team
+   * @returns Observable of the created Team
+   */
   createTeam(teamData: CreateTeamInput): Observable<Team> {
     const currentState = this.stateSubject.value;
     const tempId = `temp_${Date.now()}`;
@@ -278,6 +302,14 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Deletes a team by ID with optimistic UI update.
+   * Immediately removes the team from state, then confirms with the server.
+   * Rolls back on error.
+   *
+   * @param id - The ID of the team to delete
+   * @returns Observable that completes when deletion is confirmed
+   */
   deleteTeam(id: string): Observable<void> {
     const currentState = this.stateSubject.value;
     const deletedTeam = currentState.teams.find((t: Team) => t.id === id);
@@ -308,6 +340,15 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Updates trainer profile fields with optimistic UI update.
+   * Immediately applies changes to state, then confirms with the server.
+   * Rolls back on error with a descriptive error message.
+   *
+   * @param id - The ID of the trainer to update
+   * @param updates - Partial trainer fields to update
+   * @returns Observable of the updated Trainer
+   */
   updateTrainer(id: string, updates: Partial<Omit<Trainer, 'id'>>): Observable<Trainer> {
     console.log('=== UPDATE TRAINER ===');
     console.log('Trainer ID:', id);
@@ -371,6 +412,12 @@ export class TrainerStore {
     );
   }
 
+  /**
+   * Sets the current trainer ID and loads all associated data
+   * (trainer profile, teams, and battles)
+   *
+   * @param trainerId - The ID of the trainer to set as current
+   */
   setCurrentTrainer(trainerId: string): void {
     this.stateSubject.next({
       ...this.stateSubject.value,
@@ -381,6 +428,9 @@ export class TrainerStore {
     this.loadBattles().subscribe();
   }
 
+  /**
+   * Clears the current error state
+   */
   clearError(): void {
     this.stateSubject.next({
       ...this.stateSubject.value,
@@ -388,14 +438,27 @@ export class TrainerStore {
     });
   }
 
+  /**
+   * Returns the current number of teams in the store
+   *
+   * @returns Number of teams
+   */
   getTeamCount(): number {
     return this.stateSubject.value.teams.length;
   }
 
+  /**
+   * Resets the store to its initial state
+   */
   reset(): void {
     this.stateSubject.next(INITIAL_STATE);
   }
 
+  /**
+   * Sets the loading state
+   *
+   * @param loading - Whether the store is currently loading
+   */
   private setLoading(loading: boolean): void {
     this.stateSubject.next({
       ...this.stateSubject.value,
@@ -403,6 +466,11 @@ export class TrainerStore {
     });
   }
 
+  /**
+   * Sets the error state
+   *
+   * @param error - Error message string, or null to clear
+   */
   private setError(error: string | null): void {
     this.stateSubject.next({
       ...this.stateSubject.value,
@@ -410,6 +478,12 @@ export class TrainerStore {
     });
   }
 
+  /**
+   * Transforms raw API trainer data into the Trainer interface
+   *
+   * @param raw - Raw trainer object from the API
+   * @returns Normalized Trainer object
+   */
   private transformTrainer(raw: any): Trainer {
     console.log('Transforming raw trainer data:', raw);
     return {
@@ -422,6 +496,12 @@ export class TrainerStore {
     };
   }
 
+  /**
+   * Transforms raw API team data into the Team interface
+   *
+   * @param raw - Raw team object from the API
+   * @returns Normalized Team object
+   */
   private transformTeam(raw: any): Team {
     return {
       id: String(raw.id),
@@ -435,6 +515,12 @@ export class TrainerStore {
     };
   }
 
+  /**
+   * Transforms raw API battle data into the Battle interface
+   *
+   * @param raw - Raw battle object from the API
+   * @returns Normalized Battle object
+   */
   private transformBattle(raw: any): Battle {
     return {
       id: String(raw.id),

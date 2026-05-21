@@ -53,8 +53,10 @@ export class TrainerProfileComponent implements OnInit {
   // Max file size: 500KB = 500 * 1024 = 512,000 bytes
   private readonly MAX_FILE_SIZE = 500 * 1024;
 
+  /**
+   * Initializes the component by loading trainer and battle data from the store
+   */
   ngOnInit(): void {
-    console.log('TrainerProfileComponent initialized');
 
     this.trainerStore.trainer$.subscribe(trainer => {
       console.log('Trainer updated:', trainer);
@@ -87,12 +89,23 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * Returns the first letter of the trainer's name as an avatar fallback initial
+   *
+   * @returns Single uppercase character
+   */
   getInitial(): string {
     const name = this.trainer()?.name;
     if (!name) return 'T';
     return name.charAt(0).toUpperCase();
   }
 
+  /**
+   * Returns the URL to display for the trainer avatar.
+   * Prefers a newly selected preview over the stored URL.
+   *
+   * @returns Avatar URL string, or empty string if none
+   */
   getDisplayAvatarUrl(): string {
     const preview = this.avatarPreviewUrl();
     if (preview) {
@@ -104,6 +117,12 @@ export class TrainerProfileComponent implements OnInit {
     return '';
   }
 
+  /**
+   * Handles avatar image load errors by clearing the stored URL
+   * and showing an error message to the user
+   *
+   * @param event - The image error event
+   */
   onImageError(event: Event): void {
     console.log('Image load error, clearing avatar URL');
     const trainer = this.trainer();
@@ -124,6 +143,9 @@ export class TrainerProfileComponent implements OnInit {
     }
   }
 
+  /**
+   * Programmatically triggers the hidden file input element
+   */
   triggerFileUpload(): void {
     this.fileInput?.nativeElement.click();
   }
@@ -184,6 +206,9 @@ export class TrainerProfileComponent implements OnInit {
     }
   }
 
+  /**
+   * Cancels a pending avatar upload and restores the original avatar URL
+   */
   cancelUpload(): void {
     this.avatarPreviewUrl.set(null);
     this.editAvatarUrl.set(this.originalAvatarUrl());
@@ -191,6 +216,9 @@ export class TrainerProfileComponent implements OnInit {
     this.error.set(null);
   }
 
+  /**
+   * Enters edit mode and pre-populates form fields with current trainer data
+   */
   startEdit(): void {
     const current = this.trainer();
     if (current) {
@@ -212,6 +240,9 @@ export class TrainerProfileComponent implements OnInit {
     console.log('Edit mode started');
   }
 
+  /**
+   * Exits edit mode without saving changes
+   */
   cancelEdit(): void {
     this.cancelUpload();
     this.isEditing.set(false);
@@ -220,6 +251,10 @@ export class TrainerProfileComponent implements OnInit {
     console.log('Edit mode cancelled');
   }
 
+  /**
+   * Saves changed profile fields to the server.
+   * Only sends fields that have actually changed.
+   */
   saveProfile(): void {
     const trainer = this.trainer();
     if (!trainer) return;
@@ -275,6 +310,12 @@ export class TrainerProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * Returns the CSS class corresponding to the trainer's rank
+   *
+   * @param rank - The trainer rank string
+   * @returns CSS class name for the rank badge
+   */
   getRankClass(rank: string): string {
     const rankMap: Record<string, string> = {
       'Trainer': 'rank-trainer',

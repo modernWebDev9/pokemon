@@ -447,6 +447,9 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     this.battlePolling.stopPolling();
   }
   
+  /**
+   * Loads initial battle logs from the API and sets the polling baseline timestamp
+   */
   private loadInitialLogs(): void {
     this.loading.set(true);
     this.battlePolling.fetchAllLogs().subscribe({
@@ -467,18 +470,27 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Subscribes to the trainer store's battle stream and updates local state
+   */
   private loadBattles(): void {
     this.trainerStore.battles$.subscribe((battles: Battle[]) => {
       this.allBattles.set(battles);
     });
   }
   
+  /**
+   * Subscribes to the trainer store's teams stream and updates local state
+   */
   private loadTeams(): void {
     this.trainerStore.teams$.subscribe((teams: Team[]) => {
       this.allTeams.set(teams);
     });
   }
   
+  /**
+   * Fetches the first 151 Pokémon for team detail display
+   */
   private loadPokemon(): void {
     this.pokemonStore.fetchPokemonList(151, 0).subscribe({
       next: (pokemon: Pokemon[]) => {
@@ -490,23 +502,40 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Sets the active severity filter
+   *
+   * @param severity - Severity level to filter by, or 'all' for no filter
+   */
   setSeverityFilter(severity: string): void {
     this.selectedSeverity.set(severity);
   }
   
+  /**
+   * Clears all battle log entries from the display
+   */
   clearLogs(): void {
     this.battleLogs.set([]);
   }
   
+  /**
+   * Resets the polling timestamp and reloads all logs from the beginning
+   */
   refreshLogs(): void {
     this.battlePolling.resetLastTimestamp();
     this.loadInitialLogs();
   }
   
+  /**
+   * Toggles the auto-scroll behavior for new log entries
+   */
   toggleAutoScroll(): void {
     this.autoScroll.update(val => !val);
   }
   
+  /**
+   * Scrolls the log container to the top to show the newest entries
+   */
   private scrollToTop(): void {
     const container = document.querySelector('.log-container');
     if (container) {
@@ -514,6 +543,12 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     }
   }
   
+  /**
+   * Returns a human-readable relative time string for a given timestamp
+   *
+   * @param timestamp - ISO timestamp string
+   * @returns Relative time string (e.g. "5 min ago", "Just now")
+   */
   getRelativeTime(timestamp: string): string {
     const date = new Date(timestamp);
     const now = new Date();
@@ -528,6 +563,12 @@ export class BattleLogComponent implements OnInit, OnDestroy {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   }
   
+  /**
+   * Returns the CSS class string for a log entry based on its severity
+   *
+   * @param severity - The severity level of the log entry
+   * @returns CSS class string
+   */
   getSeverityClass(severity: string): string {
     return `log-entry severity-${severity}`;
   }

@@ -51,6 +51,9 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     });
   }
   
+  /**
+   * Initializes the chart after the view is ready and starts observing theme changes
+   */
   ngAfterViewInit(): void {
     this.isViewInitialized = true;
     this.observeThemeChanges();
@@ -59,6 +62,10 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     }, 100);
   }
   
+  /**
+   * Sets up a MutationObserver to detect data-theme attribute changes
+   * and recreate the chart with updated colors
+   */
   private observeThemeChanges(): void {
     const observer = new MutationObserver(() => {
       const newTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -74,6 +81,9 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     });
   }
   
+  /**
+   * Destroys and recreates the chart to apply new theme colors
+   */
   private recreateChart(): void {
     const data = this.battles();
     if (data && data.length > 0) {
@@ -81,6 +91,11 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     }
   }
   
+  /**
+   * Returns color configuration based on the current theme
+   *
+   * @returns Object containing grid, text, wins, and losses color values
+   */
   private getChartColors() {
     const isDark = this.currentTheme === 'dark';
     return {
@@ -93,6 +108,9 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     };
   }
   
+  /**
+   * Creates and renders the Chart.js bar chart with wins/losses data
+   */
   private initChart(): void {
     this.destroyChart();
     
@@ -206,6 +224,11 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     });
   }
   
+  /**
+   * Updates the existing chart with new battle data
+   *
+   * @param data - Array of monthly battle statistics
+   */
   private updateChart(data: MonthlyBattleData[]): void {
     if (!this.chart) {
       this.initChart();
@@ -218,6 +241,9 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     this.chart.update();
   }
   
+  /**
+   * Destroys the Chart.js instance and frees its resources
+   */
   private destroyChart(): void {
     if (this.chart) {
       this.chart.destroy();
@@ -225,8 +251,9 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
     }
   }
   
+  /**
+   * Cleans up the chart instance on component destruction
+   */
   ngOnDestroy(): void {
-    this.destroyChart();
-    this.isViewInitialized = false;
   }
 }

@@ -18,6 +18,7 @@
       <!-- Bulk Actions (Compact) -->
       @if (selectedPokemonIds().size > 0) {
         <div class="filter-item bulk-actions-compact">
+          <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span>
           <button class="compact-add-btn" (click)="openAddToTeamModal()" [disabled]="selectedPokemonIds().size > 6">
             ➕ Add to Team
           </button>
@@ -28,14 +29,44 @@
       }
       
       <!-- Type Filter -->
-      <div class="filter-item">
+      <div class="filter-item type-filter-item">
         <span class="filter-icon">🎯</span>
-        <select [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event); onTypeChange()" class="filter-select">
-          <option value="">All Types</option>
-          @for (type of availableTypes(); track type) {
-            <option [value]="type">{{ type | titlecase }}</option>
+        <div class="custom-select">
+          @if (typeDropdownOpen()) {
+            <div class="custom-select-backdrop" (click)="closeTypeDropdown()"></div>
           }
-        </select>
+          <button
+            type="button"
+            class="custom-select-trigger"
+            (click)="toggleTypeDropdown()"
+            [class.open]="typeDropdownOpen()">
+            {{ selectedTypeLabel() }}
+            <svg class="custom-select-arrow" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (typeDropdownOpen()) {
+            <ul class="custom-select-menu type-select-menu">
+              <li
+                class="custom-select-option"
+                [class.selected]="selectedType() === ''"
+                (click)="selectType('')">
+                All Types
+              </li>
+              @for (type of availableTypes(); track type) {
+                <li
+                  class="custom-select-option"
+                  [class.selected]="type === selectedType()"
+                  (click)="selectType(type)">
+                  <span class="type-dot type-{{ type.toLowerCase() }}"></span>
+                  {{ type | titlecase }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </div>
       
       <!-- Stats Range Slider -->
@@ -43,13 +74,18 @@
         <span class="filter-icon">📊</span>
         <div class="range-controls">
           <span class="range-value">{{ minStats() }}</span>
-          <input 
-            type="range" 
-            [ngModel]="maxStats()"
-            (ngModelChange)="maxStats.set($event); minStats.set(0); onStatsChange()"
-            min="0" 
-            max="1000" 
-            class="range-input" />
+          <div class="range-track-wrapper">
+            <div class="range-track">
+              <div class="range-fill" [style.width.%]="rangeFillPct()"></div>
+            </div>
+            <input
+              type="range"
+              [value]="maxStats()"
+              (input)="maxStats.set(+$any($event.target).value); minStats.set(0); onStatsChange()"
+              min="0"
+              max="1000"
+              class="range-input" />
+          </div>
           <span class="range-value">{{ maxStats() }}</span>
         </div>
         <span class="range-label">Total Stats</span>
@@ -58,13 +94,10 @@
     </div>
   </div>
   
-  <!-- Loading Overlay -->
+  <!-- Simple Loading Spinner -->
   @if (loading()) {
     <div class="loading-overlay">
-      <div class="loading-content">
-        <div class="pokeball-spinner"></div>
-        <p>Loading Pokémon...</p>
-      </div>
+      <div class="loading-spinner"></div>
     </div>
   }
   
@@ -159,21 +192,47 @@
     </table>
   </div>
   
-    <!-- Enhanced Pagination Controls -->
-  @if (totalPages() > 1 || filteredPokemon().length > 0) {
+  <!-- Pagination Controls - Only show when there are filtered results -->
+  @if (filteredPokemon().length > 0) {
     <div class="pagination">
       <!-- Left Section: Page Size Selector -->
       <div class="pagination-left">
-        <select 
-          [value]="pageSize()"
-          (change)="onPageSizeChange($any($event.target).value)" 
-          class="page-size-select">
-          <option [value]="10">10</option>
-          <option [value]="25">25</option>
-          <option [value]="50">50</option>
-          <option [value]="100">100</option>
-          <option [value]="200">200</option>
-        </select>
+        <div class="page-size-wrapper">
+          <span class="page-size-label">Show</span>
+
+          <!-- Custom dropdown — replaces native <select> so option bg is theme-aware -->
+          <div class="custom-select">
+            @if (pageSizeDropdownOpen()) {
+              <div class="custom-select-backdrop" (click)="closePageSizeDropdown()"></div>
+            }
+            <button
+              type="button"
+              class="custom-select-trigger"
+              (click)="togglePageSizeDropdown()"
+              [class.open]="pageSizeDropdownOpen()">
+              {{ currentPageSize() }}
+              <svg class="custom-select-arrow" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            @if (pageSizeDropdownOpen()) {
+              <ul class="custom-select-menu">
+                @for (opt of pageSizeOptions; track opt) {
+                  <li
+                    class="custom-select-option"
+                    [class.selected]="opt === currentPageSize()"
+                    (click)="selectPageSize(opt)">
+                    {{ opt }}
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <span class="page-size-label">per page</span>
+        </div>
         <span class="total-items">Total: {{ filteredPokemon().length }} Pokémon</span>
       </div>
       
@@ -182,7 +241,7 @@
         <!-- First Page Button -->
         <button 
           (click)="goToFirstPage()" 
-          [disabled]="currentPage() === 1" 
+          [disabled]="currentPageNumber() === 1" 
           class="page-nav-btn"
           title="First Page">
           «
@@ -191,7 +250,7 @@
         <!-- Previous Page Button -->
         <button 
           (click)="previousPage()" 
-          [disabled]="currentPage() === 1" 
+          [disabled]="currentPageNumber() === 1" 
           class="page-nav-btn"
           title="Previous Page">
           ‹
@@ -202,7 +261,7 @@
           <span class="page-label">Page</span>
           <input 
             type="number" 
-            [value]="currentPage()"
+            [value]="currentPageNumber()"
             (change)="goToPage($any($event.target).value)"
             min="1" 
             [max]="totalPages()"
@@ -213,7 +272,7 @@
         <!-- Next Page Button -->
         <button 
           (click)="nextPage()" 
-          [disabled]="currentPage() === totalPages()" 
+          [disabled]="currentPageNumber() === totalPages()" 
           class="page-nav-btn"
           title="Next Page">
           ›
@@ -222,7 +281,7 @@
         <!-- Last Page Button -->
         <button 
           (click)="goToLastPage()" 
-          [disabled]="currentPage() === totalPages()" 
+          [disabled]="currentPageNumber() === totalPages()" 
           class="page-nav-btn"
           title="Last Page">
           »
@@ -232,8 +291,8 @@
       <!-- Right Section: Page Info -->
       <div class="pagination-right">
         <span class="page-range">
-          Showing {{ displayedRange().start }} - {{ displayedRange().end }} 
-          of {{ displayedRange().total }} Pokémon
+          {{ displayedRange().start }} - {{ displayedRange().end }} 
+          of {{ displayedRange().total }}
         </span>
       </div>
     </div>

@@ -1,12 +1,9 @@
-/**
- * Pokedex Table Component - Displays Pokémon in a sortable, filterable table
- * Implements client-side pagination, filtering, sorting, and multi-row selection
- */
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+// src/app/features/pokedex/pokedex-table.component.ts
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PokemonStore, Pokemon } from '../../../state/pokemon/pokemon.store';
-import { TrainerStore, Team, PokemonDetail } from '../../../state/trainer/trainer.store';
+import { PokemonStore, Pokemon, PokemonPageResponse } from '../../../state/pokemon/pokemon.store';
+import { TrainerStore, Team } from '../../../state/trainer/trainer.store';
 import { PokemonDetailComponent } from '../pokemon-detail/pokemon-detail.component';
 
 @Component({
@@ -20,75 +17,100 @@ import { PokemonDetailComponent } from '../pokemon-detail/pokemon-detail.compone
 export class PokedexTableComponent implements OnInit {
   private pokemonStore = inject(PokemonStore);
   private trainerStore = inject(TrainerStore);
-
-  @ViewChild('teamSelect') teamSelect!: ElementRef<HTMLSelectElement>;
   
-  // Math reference for template
+  // Expose Math to template
   Math = Math;
-
-  // UI state signals
-  loading = signal<boolean>(true);
+  
+  // Signals from store
+  loading = this.pokemonStore.loading$;
+  allPokemon = signal<Pokemon[]>([]);
+  totalCount = this.pokemonStore.totalCount$;
+  currentPageNumber = signal<number>(1);
+  currentPageSize = signal<number>(25);
+  
+  // UI state for filters
   searchTerm = signal<string>('');
   selectedType = signal<string>('');
   minStats = signal<number>(0);
   maxStats = signal<number>(1000);
+  
+  // Sorting state
   sortBy = signal<string>('id');
   sortDir = signal<'asc' | 'desc'>('asc');
-  currentPage = signal<number>(1);
-  pageSize = signal<number>(25);
-
-  // Multi-row selection signals
+  
+  // Selection state
   selectedPokemonIds = signal<Set<number>>(new Set());
+  selectedPokemon = signal<Pokemon | null>(null);
   showBulkActionBar = signal<boolean>(false);
-
-  // Add to team modal signals
+  
+  // Modal state
   showAddToTeamModal = signal<boolean>(false);
   selectedTeamId = signal<string>('');
   bulkAddError = signal<string | null>(null);
   bulkAddSuccess = signal<string | null>(null);
   isAdding = signal<boolean>(false);
-
-  // Data signals
-  allPokemon = signal<Pokemon[]>([]);
+  
+  // Data
   userTeams = signal<Team[]>([]);
-  selectedPokemon = signal<Pokemon | null>(null);
-
+  
+  // Loading tips
+  private tips = [
+    'Did you know? There are 18 different Pokémon types!',
+    'Tip: Use type advantages to win battles more easily!',
+    'Did you know? Pikachu is the most recognized Pokémon!',
+    'Tip: Build a balanced team with different types!',
+    'Did you know? Magikarp can jump over mountains!',
+    'Tip: Check type matchups before challenging gyms!',
+    'Did you know? There are over 1000 Pokémon to discover!',
+    'Tip: Save your strongest Pokémon for tough battles!',
+    'Did you know? Shiny Pokémon are extremely rare!',
+    'Tip: Complete your Pokédex to become a master trainer!'
+  ];
+  
+  currentTip = signal<string>(this.tips[0]);
+  private tipInterval: any;
+  
   /**
-   * Computed signal for available Pokémon types
+   * Computed: Available types from all loaded Pokémon
    */
   availableTypes = computed(() => {
     const types = new Set<string>();
-    this.allPokemon().forEach(p => p.types.forEach(t => types.add(t)));
+    this.allPokemon().forEach((p: Pokemon) => {
+      p.types.forEach((t: string) => types.add(t));
+    });
     return Array.from(types).sort();
   });
-
+  
   /**
-   * Computed signal for filtered and sorted Pokémon
+   * Computed: Filtered Pokémon based on search, type, and stats (from all loaded data)
    */
   filteredPokemon = computed(() => {
     let results = [...this.allPokemon()];
     const search = this.searchTerm().toLowerCase();
     const type = this.selectedType();
-
+    
+    // Apply search filter
     if (search.length >= 2) {
-      results = results.filter(p => p.name.toLowerCase().includes(search));
+      results = results.filter((p: Pokemon) => p.name.toLowerCase().includes(search));
     }
-
+    
+    // Apply type filter
     if (type) {
-      results = results.filter(p => p.types.includes(type));
+      results = results.filter((p: Pokemon) => p.types.includes(type));
     }
-
-    results = results.filter(p => {
+    
+    // Apply stats range filter
+    results = results.filter((p: Pokemon) => {
       const total = this.calculateTotalStats(p);
       return total >= this.minStats() && total <= this.maxStats();
     });
-
-    results.sort((a, b) => {
+    
+    // Apply sorting
+    results.sort((a: Pokemon, b: Pokemon) => {
       const sortBy = this.sortBy();
       const sortDir = this.sortDir();
-
+      
       let aVal: any, bVal: any;
-
       switch (sortBy) {
         case 'id':
           aVal = a.id;
@@ -106,214 +128,211 @@ export class PokedexTableComponent implements OnInit {
           aVal = a.stats[sortBy as keyof typeof a.stats];
           bVal = b.stats[sortBy as keyof typeof b.stats];
       }
-
+      
       return sortDir === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
-
+    
     return results;
   });
-
+  
   /**
-   * Computed signal for selected Pokémon objects
-   */
-  selectedPokemonObjects = computed(() => {
-    const selectedIds = this.selectedPokemonIds();
-    return this.allPokemon().filter(p => selectedIds.has(p.id));
-  });
-
-  /**
-   * Computed signal for total number of pages
+   * Computed: Total pages based on filtered results
    */
   totalPages = computed(() => {
     const total = this.filteredPokemon().length;
-    const size = this.pageSize();
+    const size = this.currentPageSize();
     return Math.max(1, Math.ceil(total / size));
   });
-
+  
   /**
-   * Computed signal for paginated Pokémon
+   * Computed: Paginated Pokémon from filtered results
    */
   paginatedPokemon = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    const end = start + this.pageSize();
+    const start = (this.currentPageNumber() - 1) * this.currentPageSize();
+    const end = start + this.currentPageSize();
     return this.filteredPokemon().slice(start, end);
   });
-
+  
   /**
-   * Computed signal for the range of items being displayed
+   * Computed: Selected Pokémon objects from current page
+   */
+  selectedPokemonObjects = computed(() => {
+    const selectedIds = this.selectedPokemonIds();
+    return this.paginatedPokemon().filter((p: Pokemon) => selectedIds.has(p.id));
+  });
+  
+  /**
+   * Computed: Displayed range info
    */
   displayedRange = computed(() => {
     const total = this.filteredPokemon().length;
-    const current = this.currentPage();
-    const size = this.pageSize();
-    const start = total === 0 ? 0 : (current - 1) * size + 1;
-    const end = Math.min(current * size, total);
+    const start = total === 0 ? 0 : (this.currentPageNumber() - 1) * this.currentPageSize() + 1;
+    const end = Math.min(this.currentPageNumber() * this.currentPageSize(), total);
     return { start, end, total };
   });
-
+  
   /**
-   * Initializes component
+   * Initialize component
    */
   ngOnInit(): void {
     console.log('PokedexTableComponent initialized');
-    this.loadPokemon();
+    this.startTipRotation();
+    this.loadAllPokemon();
     this.loadUserTeams();
   }
-
+  
   /**
-   * Loads ALL Pokémon data
+   * Start rotating tips
    */
-  private loadPokemon(): void {
+  private startTipRotation(): void {
+    let tipIndex = 0;
+    this.tipInterval = setInterval(() => {
+      tipIndex = (tipIndex + 1) % this.tips.length;
+      this.currentTip.set(this.tips[tipIndex]);
+    }, 4000);
+  }
+  
+  /**
+   * Stop tip rotation
+   */
+  private stopTipRotation(): void {
+    if (this.tipInterval) {
+      clearInterval(this.tipInterval);
+    }
+  }
+  
+  /**
+   * Load all Pokémon data (batched)
+   */
+  private loadAllPokemon(): void {
     this.pokemonStore.fetchAllPokemon().subscribe({
-      next: (pokemon) => {
+      next: (pokemon: Pokemon[]) => {
         this.allPokemon.set(pokemon);
-        this.loading.set(false);
-        console.log('Pokémon loaded:', pokemon.length);
-
-        if (pokemon.length > 0) {
-          console.log('First Pokémon:', pokemon[0].name, 'ID:', pokemon[0].id);
-          console.log('Last Pokémon:', pokemon[pokemon.length - 1].name, 'ID:', pokemon[pokemon.length - 1].id);
-        }
+        console.log(`Loaded ${pokemon.length} Pokémon total`);
       },
-      error: (error) => {
-        console.error('Error loading Pokémon:', error);
-        this.loading.set(false);
+      error: (err: any) => {
+        console.error('Error loading Pokémon:', err);
       }
     });
   }
-
+  
   /**
-   * Loads user's teams for the Add to Team dropdown
+   * Load user's teams
    */
   private loadUserTeams(): void {
     this.trainerStore.teams$.subscribe({
-      next: (teams) => {
+      next: (teams: Team[]) => {
         this.userTeams.set(teams || []);
         console.log('Teams loaded:', teams.length);
       },
-      error: (err) => {
-        console.error('Error loading teams:', err);
-      }
+      error: (err: any) => console.error('Error loading teams:', err)
     });
   }
-
+  
   /**
-   * Calculates total base stats for a Pokémon
+   * Calculate total stats
    */
   calculateTotalStats(pokemon: Pokemon): number {
     return pokemon.stats.hp + pokemon.stats.attack + pokemon.stats.defense +
            pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
   }
-
+  
   /**
-   * Handles search term change
-   */
-  onSearchChange(): void {
-    this.currentPage.set(1);
-    this.clearSelection();
-  }
-
-  /**
-   * Handles type filter change
-   */
-  onTypeChange(): void {
-    this.currentPage.set(1);
-    this.clearSelection();
-  }
-
-  /**
-   * Handles stats range change
-   */
-  onStatsChange(): void {
-    this.currentPage.set(1);
-  }
-
-  /**
-   * Handles page size change
-   */
-  onPageSizeChange(newSize: number): void {
-    const size = Number(newSize);
-    if (isNaN(size) || size === this.pageSize()) return;
-    
-    // Store current first item index before changing page size
-    const currentFirstItemIndex = (this.currentPage() - 1) * this.pageSize();
-    
-    // Update page size
-    this.pageSize.set(size);
-    
-    // Calculate new page number to keep the same first item visible
-    let newPage = Math.floor(currentFirstItemIndex / size) + 1;
-    
-    // Get total pages with new page size
-    const total = this.filteredPokemon().length;
-    const maxPage = Math.max(1, Math.ceil(total / size));
-    
-    // Ensure new page is within bounds
-    if (newPage > maxPage) {
-      newPage = maxPage;
-    }
-    if (newPage < 1) {
-      newPage = 1;
-    }
-    
-    // Update current page
-    this.currentPage.set(newPage);
-    
-    console.log(`Page size changed to ${size}, new page: ${newPage}, max page: ${maxPage}`);
-  }
-
-  /**
-   * Sorts table by column
+   * Sort table by column
    */
   sort(column: string): void {
     if (this.sortBy() === column) {
-      this.sortDir.update(dir => dir === 'asc' ? 'desc' : 'asc');
+      this.sortDir.update((dir: 'asc' | 'desc') => dir === 'asc' ? 'desc' : 'asc');
     } else {
       this.sortBy.set(column);
       this.sortDir.set('asc');
     }
-    this.currentPage.set(1);
+    this.currentPageNumber.set(1);
   }
-
+  
   /**
-   * Navigates to previous page
+   * Handle search change
+   */
+  onSearchChange(): void {
+    this.currentPageNumber.set(1);
+    this.clearSelection();
+  }
+  
+  /**
+   * Handle type change
+   */
+  onTypeChange(): void {
+    this.currentPageNumber.set(1);
+    this.clearSelection();
+  }
+  
+  /**
+   * Handle stats range change
+   */
+  onStatsChange(): void {
+    this.currentPageNumber.set(1);
+    this.clearSelection();
+  }
+  
+  /**
+   * Handle page size change
+   */
+  onPageSizeChange(newSize: number): void {
+    const size = Number(newSize);
+    if (isNaN(size) || size === this.currentPageSize()) return;
+    
+    const currentFirstItemIndex = (this.currentPageNumber() - 1) * this.currentPageSize();
+    this.currentPageSize.set(size);
+    
+    let newPage = Math.floor(currentFirstItemIndex / size) + 1;
+    const totalPages = this.totalPages();
+    
+    if (newPage > totalPages) newPage = totalPages;
+    if (newPage < 1) newPage = 1;
+    
+    this.currentPageNumber.set(newPage);
+    this.clearSelection();
+  }
+  
+  /**
+   * Go to previous page
    */
   previousPage(): void {
-    if (this.currentPage() > 1) {
-      this.currentPage.update(page => page - 1);
+    if (this.currentPageNumber() > 1) {
+      this.currentPageNumber.update((page: number) => page - 1);
     }
   }
-
+  
   /**
-   * Navigates to next page
+   * Go to next page
    */
   nextPage(): void {
-    if (this.currentPage() < this.totalPages()) {
-      this.currentPage.update(page => page + 1);
+    if (this.currentPageNumber() < this.totalPages()) {
+      this.currentPageNumber.update((page: number) => page + 1);
     }
   }
-
+  
   /**
-   * Goes to first page
+   * Go to first page
    */
   goToFirstPage(): void {
-    if (this.currentPage() !== 1) {
-      this.currentPage.set(1);
+    if (this.currentPageNumber() !== 1) {
+      this.currentPageNumber.set(1);
     }
   }
-
+  
   /**
-   * Goes to last page
+   * Go to last page
    */
   goToLastPage(): void {
     const lastPage = this.totalPages();
-    if (this.currentPage() !== lastPage && lastPage > 0) {
-      this.currentPage.set(lastPage);
+    if (this.currentPageNumber() !== lastPage && lastPage > 0) {
+      this.currentPageNumber.set(lastPage);
     }
   }
-
+  
   /**
-   * Goes to a specific page number
+   * Go to specific page
    */
   goToPage(page: number): void {
     const total = this.totalPages();
@@ -325,38 +344,52 @@ export class PokedexTableComponent implements OnInit {
       targetPage = total;
     }
     
-    if (this.currentPage() !== targetPage && targetPage >= 1 && targetPage <= total) {
-      this.currentPage.set(targetPage);
+    if (this.currentPageNumber() !== targetPage && targetPage >= 1 && targetPage <= total) {
+      this.currentPageNumber.set(targetPage);
     }
   }
-
+  
   /**
-   * Toggles selection for a single Pokémon
+   * Toggle selection
    */
   toggleSelection(pokemonId: number, event: Event): void {
     event.stopPropagation();
     const newSelection = new Set(this.selectedPokemonIds());
-
+    
     if (newSelection.has(pokemonId)) {
       newSelection.delete(pokemonId);
-    } else {
+    } else if (newSelection.size < 6) {
       newSelection.add(pokemonId);
     }
-
+    
     this.selectedPokemonIds.set(newSelection);
     this.showBulkActionBar.set(newSelection.size > 0);
   }
-
+  
   /**
-   * Clears all selections
+   * Clear all selections
    */
   clearSelection(): void {
     this.selectedPokemonIds.set(new Set());
     this.showBulkActionBar.set(false);
   }
-
+  
   /**
-   * Opens Add to Team modal
+   * Handle Pokémon click
+   */
+  onPokemonClick(pokemon: Pokemon): void {
+    this.selectedPokemon.set(pokemon);
+  }
+  
+  /**
+   * Close detail panel
+   */
+  closeDetailPanel(): void {
+    this.selectedPokemon.set(null);
+  }
+  
+  /**
+   * Open add to team modal
    */
   openAddToTeamModal(): void {
     if (this.selectedPokemonIds().size === 0) {
@@ -364,21 +397,21 @@ export class PokedexTableComponent implements OnInit {
       setTimeout(() => this.bulkAddError.set(null), 3000);
       return;
     }
-
+    
     if (this.userTeams().length === 0) {
-      this.bulkAddError.set('No teams available. Please create a team first in Team Builder.');
+      this.bulkAddError.set('No teams available. Please create a team first.');
       setTimeout(() => this.bulkAddError.set(null), 3000);
       return;
     }
-
+    
     this.selectedTeamId.set('');
     this.bulkAddError.set(null);
     this.bulkAddSuccess.set(null);
     this.showAddToTeamModal.set(true);
   }
-
+  
   /**
-   * Closes Add to Team modal
+   * Close add to team modal
    */
   closeAddToTeamModal(): void {
     this.showAddToTeamModal.set(false);
@@ -387,32 +420,31 @@ export class PokedexTableComponent implements OnInit {
     this.bulkAddSuccess.set(null);
     this.isAdding.set(false);
   }
-
+  
   /**
-   * Adds selected Pokémon to selected team
+   * Add selected Pokémon to team
    */
   addSelectedToTeam(): void {
     if (!this.selectedTeamId()) {
       this.bulkAddError.set('Please select a team.');
       return;
     }
-
-    const targetTeam = this.userTeams().find(t => t.id === this.selectedTeamId());
+    
+    const targetTeam = this.userTeams().find((t: Team) => t.id === this.selectedTeamId());
     if (!targetTeam) {
       this.bulkAddError.set('Selected team not found.');
       return;
     }
-
+    
     this.isAdding.set(true);
     this.bulkAddError.set(null);
-
+    
     const selectedPokemon = this.selectedPokemonObjects();
     const currentPokemonIds = targetTeam.pokemonIds || [];
     const newPokemonIds = [...currentPokemonIds];
     const addedPokemon: string[] = [];
     const alreadyInTeam: string[] = [];
-
-    // Add new Pokémon (max 6 total)
+    
     for (const pokemon of selectedPokemon) {
       if (!newPokemonIds.includes(pokemon.id)) {
         if (newPokemonIds.length < 6) {
@@ -427,13 +459,12 @@ export class PokedexTableComponent implements OnInit {
         alreadyInTeam.push(pokemon.name);
       }
     }
-
-    // Create updated Pokémon details with proper structure
+    
     const existingDetails = targetTeam.pokemonDetails || [];
     const newDetails = [...existingDetails];
-
+    
     for (const pokemon of selectedPokemon) {
-      if (!existingDetails.some(d => d.pokemonId === pokemon.id)) {
+      if (!existingDetails.some((d: any) => d.pokemonId === pokemon.id)) {
         newDetails.push({
           pokemonId: pokemon.id,
           nickname: '',
@@ -442,8 +473,7 @@ export class PokedexTableComponent implements OnInit {
         });
       }
     }
-
-    // Update team using the store's update method
+    
     this.trainerStore.updateTeam(targetTeam.id, {
       pokemonIds: newPokemonIds,
       pokemonDetails: newDetails
@@ -456,41 +486,66 @@ export class PokedexTableComponent implements OnInit {
         } else {
           this.bulkAddSuccess.set(message);
         }
-
-        // Clear selection after successful add
+        
         this.clearSelection();
-
-        // Reload teams to refresh the list
         this.loadUserTeams();
-
+        
         setTimeout(() => {
           this.closeAddToTeamModal();
         }, 1500);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to add Pokémon to team:', err);
         this.isAdding.set(false);
         this.bulkAddError.set('Failed to add Pokémon to team. Please try again.');
       }
     });
   }
+  
+  // Custom page-size dropdown state
+  pageSizeDropdownOpen = signal<boolean>(false);
+  readonly pageSizeOptions = [10, 25, 50, 100];
 
-  /**
-   * Handles Pokémon row click to show detail panel
-   */
-  onPokemonClick(pokemon: Pokemon): void {
-    this.selectedPokemon.set(pokemon);
+  togglePageSizeDropdown(): void {
+    this.pageSizeDropdownOpen.update(v => !v);
   }
 
-  /**
-   * Closes Pokémon detail panel
-   */
-  closeDetailPanel(): void {
-    this.selectedPokemon.set(null);
+  selectPageSize(size: number): void {
+    this.onPageSizeChange(size);
+    this.pageSizeDropdownOpen.set(false);
   }
 
+  closePageSizeDropdown(): void {
+    this.pageSizeDropdownOpen.set(false);
+  }
+
+  // Custom type-filter dropdown state
+  typeDropdownOpen = signal<boolean>(false);
+
+  toggleTypeDropdown(): void {
+    this.typeDropdownOpen.update(v => !v);
+  }
+
+  selectType(type: string): void {
+    this.selectedType.set(type);
+    this.onTypeChange();
+    this.typeDropdownOpen.set(false);
+  }
+
+  closeTypeDropdown(): void {
+    this.typeDropdownOpen.set(false);
+  }
+
+  // Computed label for the type trigger button
+  selectedTypeLabel = computed(() =>
+    this.selectedType() ? this.selectedType().charAt(0).toUpperCase() + this.selectedType().slice(1) : 'All Types'
+  );
+
+  // Range fill percentage (0–100) for the progress bar
+  rangeFillPct = computed(() => (this.maxStats() / 1000) * 100);
+
   /**
-   * Handles image loading errors
+   * Handle image error
    */
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;

@@ -120,6 +120,11 @@ export class PokemonSelectors {
     shareReplay(1)
   );
   
+  /**
+   * Updates the active filter state, triggering re-evaluation of filteredPokemon$
+   *
+   * @param filters - Partial filter object to merge into current filters
+   */
   updateFilters(filters: Partial<PokemonFilter>): void {
     this.filterSubject.next({
       ...this.filterSubject.value,
@@ -127,11 +132,21 @@ export class PokemonSelectors {
     });
   }
   
+  /**
+   * Returns the current filter values snapshot
+   *
+   * @returns Current PokemonFilter state
+   */
   // Get current filter values
   getCurrentFilters(): PokemonFilter {
     return this.filterSubject.value;
   }
   
+  /**
+   * Returns a sorted list of all unique Pokémon types from the loaded dataset
+   *
+   * @returns Array of type name strings
+   */
   // Helper method to get available types from loaded Pokémon
   getAvailableTypes(): string[] {
     const pokemons = this.pokemonStore.pokemonList$();
@@ -140,6 +155,9 @@ export class PokemonSelectors {
     return Array.from(types).sort();
   }
   
+  /**
+   * Resets all filters to their default values
+   */
   // Reset all filters
   resetFilters(): void {
     this.filterSubject.next({

@@ -130,12 +130,20 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     });
   }
   
+  /**
+   * Initializes the radar chart after the view is ready
+   */
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.createChart();
     }
   }
   
+  /**
+   * Responds to Pokémon input changes by triggering a chart animation
+   *
+   * @param changes - Angular SimpleChanges object
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['pokemon'] && this.chartInstance) {
       this.startAnimation();
@@ -144,6 +152,11 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     }
   }
   
+  /**
+   * Returns stat values normalized to a 0–100 percentage scale for the radar chart
+   *
+   * @returns Array of 6 percentage values [hp, atk, def, spAtk, spDef, spd]
+   */
   private getStatValues(): number[] {
     const pokemon = this.pokemon();
     if (!pokemon || !pokemon.stats) {
@@ -162,6 +175,11 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     ];
   }
   
+  /**
+   * Returns the raw (non-normalized) stat values for tooltip display
+   *
+   * @returns Array of 6 raw stat values [hp, atk, def, spAtk, spDef, spd]
+   */
   private getFullStatValues(): number[] {
     const pokemon = this.pokemon();
     if (!pokemon || !pokemon.stats) {
@@ -245,6 +263,9 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     this.chartInstance.update('none');
   }
   
+  /**
+   * Creates the Chart.js radar chart instance with full configuration
+   */
   private createChart(): void {
     if (!this.canvasRef || !this.canvasRef.nativeElement) return;
     
@@ -348,11 +369,19 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     this.startAnimation();
   }
   
+  /**
+   * Resets animation progress and starts the eased animation sequence
+   */
   private startAnimation(): void {
     this.animationProgress.set(0);
     this.animate(0);
   }
   
+  /**
+   * Runs a requestAnimationFrame loop with ease-out cubic easing
+   *
+   * @param startTime - The timestamp when the animation began
+   */
   private animate(startTime: number): void {
     const duration = 1000;
     const step = (timestamp: number) => {
@@ -374,6 +403,11 @@ export class StatsChartComponent implements AfterViewInit, OnChanges {
     });
   }
   
+  /**
+   * Updates the chart dataset with interpolated values based on animation progress
+   *
+   * @param progress - Animation progress value between 0 and 1
+   */
   private updateChartData(progress: number): void {
     if (!this.chartInstance) return;
     

@@ -83,6 +83,11 @@ export class PokemonDetailComponent {
     return s.hp + s.attack + s.defense + s.specialAttack + s.specialDefense + s.speed;
   });
   
+  /**
+   * Returns a list of stat name/key pairs for template iteration
+   *
+   * @returns Array of StatItem objects
+   */
   getStatList(): StatItem[] {
     return [
       { name: 'HP', key: 'hp' },
@@ -94,24 +99,49 @@ export class PokemonDetailComponent {
     ];
   }
   
+  /**
+   * Retrieves a specific stat value from the stats object by key
+   *
+   * @param stats - The Pokémon stats object
+   * @param key - The stat key to retrieve
+   * @returns The numeric stat value
+   */
   getStatValue(stats: Pokemon['stats'], key: StatKey): number {
     return stats[key];
   }
   
+  /**
+   * Converts a raw stat value to a percentage of the maximum possible stat
+   *
+   * @param stat - The raw stat value
+   * @param max - The maximum possible stat value (default 255)
+   * @returns Percentage value between 0 and 100
+   */
   getStatPercentage(stat: number, max: number = 255): number {
     return (stat / max) * 100;
   }
   
+  /**
+   * Handles broken sprite images by substituting a fallback URL
+   *
+   * @param event - The image error event
+   */
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
   }
   
+  /**
+   * Stops any playing audio and emits the closed output event
+   */
   onClose(): void {
     this.stopAudio();
     this.closed.emit();
   }
   
+  /**
+   * Plays the Pokémon's cry audio from the PokéAPI cries endpoint
+   */
   playAudio(): void {
     const url = this.audioUrl();
     if (!url) return;
@@ -131,6 +161,9 @@ export class PokemonDetailComponent {
     };
   }
   
+  /**
+   * Stops the currently playing cry audio and resets the playing state
+   */
   stopAudio(): void {
     if (this.audioElement) {
       this.audioElement.pause();

@@ -237,6 +237,9 @@ export class TypeDistributionChartComponent implements AfterViewInit, OnDestroy 
     }
   }
   
+  /**
+   * Creates the Chart.js doughnut chart instance
+   */
   private createChart(): void {
     const ctx = this.canvasRef.nativeElement.getContext('2d');
     if (!ctx) return;
@@ -253,6 +256,11 @@ export class TypeDistributionChartComponent implements AfterViewInit, OnDestroy 
     }
   }
   
+  /**
+   * Updates the doughnut chart with new type distribution data
+   *
+   * @param types - Array of TypeData objects with type name, count, and color
+   */
   private updateChart(types: TypeData[]): void {
     if (!this.chartInstance) return;
     
@@ -265,6 +273,9 @@ export class TypeDistributionChartComponent implements AfterViewInit, OnDestroy 
     this.chartInstance.update();
   }
   
+  /**
+   * Clears all data from the chart when no types are selected
+   */
   private clearChart(): void {
     if (!this.chartInstance) return;
     
