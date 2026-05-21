@@ -39,14 +39,17 @@ export class BattleChartComponent implements AfterViewInit, OnDestroy {
   private isViewInitialized = false;
   private currentTheme: string = 'dark';
   
-  private updateEffect = effect(() => {
-    const data = this.battles();
-    if (data && data.length > 0 && this.isViewInitialized) {
-      setTimeout(() => {
-        this.updateChart(data);
-      });
-    }
-  });
+  constructor() {
+    // Effect to update chart when battle data changes
+    effect(() => {
+      const data = this.battles();
+      if (data && data.length > 0 && this.isViewInitialized) {
+        setTimeout(() => {
+          this.updateChart(data);
+        });
+      }
+    });
+  }
   
   ngAfterViewInit(): void {
     this.isViewInitialized = true;

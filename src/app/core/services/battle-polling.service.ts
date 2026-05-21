@@ -1,5 +1,5 @@
 // src/app/core/services/battle-polling.service.ts
-import { Injectable, DestroyRef, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { interval, Observable, Subject } from 'rxjs';
 import { switchMap, map, tap, takeUntil } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -24,7 +24,6 @@ export interface BattleLogEntry {
 @Injectable({ providedIn: 'root' })
 export class BattlePollingService {
   private http = inject(HttpClient);
-  private destroyRef = inject(DestroyRef);
   
   private apiUrl = 'http://localhost:4000';
   private lastTimestamp = new Date(0);

@@ -4,7 +4,7 @@
  */
 import { Component, input, ElementRef, ViewChild, AfterViewInit, OnDestroy, PLATFORM_ID, inject, effect } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Chart, ChartConfiguration, ChartData, ChartOptions, registerables } from 'chart.js';
+import { Chart, ChartData, ChartOptions, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 

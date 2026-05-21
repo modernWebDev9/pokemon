@@ -531,7 +531,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const pokemonIds = this.selectedPokemonIds();
-    const pokemonDetails: any[] = Array.from(this.selectedPokemonEVs().entries()).map(([pokemonId, data]) => ({
+    const pokemonDetails: PokemonDetail[] = Array.from(this.selectedPokemonEVs().entries()).map(([pokemonId, data]) => ({
       pokemonId,
       nickname: data.nickname,
       heldItem: data.heldItem,

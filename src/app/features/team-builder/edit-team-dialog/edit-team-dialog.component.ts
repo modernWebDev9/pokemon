@@ -19,14 +19,7 @@ export interface EVSpread {
   speed: number;
 }
 
-interface PokemonWithDetails {
-  id: number;
-  pokemonId: number;
-  nickname: string;
-  heldItem: string;
-  evs: EVSpread;
-  pokemon: Pokemon | undefined;
-}
+
 
 @Component({
   selector: 'app-edit-team-dialog',
