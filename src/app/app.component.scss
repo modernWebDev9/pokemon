@@ -19,10 +19,11 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Light theme header */
+/* Light theme navbar - brighter and cleaner */
 [data-theme="light"] .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .navbar-container {
@@ -90,6 +91,19 @@
   }
 }
 
+/* Light theme logo */
+[data-theme="light"] .logo {
+  .logo-text span:last-child {
+    color: #111827;
+  }
+  
+  .logo-badge {
+    background: rgba(79, 70, 229, 0.12);
+    border-color: rgba(79, 70, 229, 0.3);
+    color: #4f46e5;
+  }
+}
+
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -102,6 +116,12 @@
   background: rgba(0, 0, 0, 0.3);
   padding: 5px;
   border-radius: 60px;
+  backdrop-filter: blur(10px);
+}
+
+/* Light theme nav links */
+[data-theme="light"] .nav-links {
+  background: rgba(0, 0, 0, 0.04);
   backdrop-filter: blur(10px);
 }
 
@@ -157,6 +177,25 @@
   }
 }
 
+/* Light theme nav link */
+[data-theme="light"] .nav-link {
+  color: rgba(55, 65, 81, 0.7);
+  
+  &:hover {
+    color: #111827;
+    background: rgba(0, 0, 0, 0.03);
+  }
+  
+  &.active {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(124, 58, 237, 0.12));
+    color: #4f46e5;
+    
+    .nav-indicator {
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    }
+  }
+}
+
 /* Right Section */
 .nav-right {
   display: flex;
@@ -176,6 +215,7 @@
   backdrop-filter: blur(10px);
   transition: all var(--transition-base);
   cursor: pointer;
+  border: none;
   
   .theme-icon {
     font-size: 1.3rem;
@@ -184,6 +224,15 @@
   &:hover {
     background: rgba(0, 245, 255, 0.3);
     transform: rotate(15deg) scale(1.1);
+  }
+}
+
+/* Light theme toggle */
+[data-theme="light"] .theme-toggle {
+  background: rgba(0, 0, 0, 0.05);
+  
+  &:hover {
+    background: rgba(79, 70, 229, 0.15);
   }
 }
 
@@ -264,6 +313,31 @@
   }
 }
 
+/* Light theme trainer card */
+[data-theme="light"] .trainer-card {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  
+  &:hover {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: rgba(79, 70, 229, 0.25);
+  }
+  
+  .trainer-info {
+    .trainer-name {
+      color: #111827;
+    }
+    
+    .trainer-rank {
+      color: #4f46e5;
+    }
+  }
+  
+  .trainer-avatar .avatar-status {
+    border-color: #ffffff;
+  }
+}
+
 /* Main Content */
 .main {
   flex: 1;
@@ -291,6 +365,16 @@
   
   .footer-divider {
     margin: 0 12px;
+  }
+}
+
+/* Light theme footer */
+[data-theme="light"] .footer {
+  background: #f9fafb;
+  border-top-color: #e5e7eb;
+  
+  .footer-content {
+    color: #9ca3af;
   }
 }
 

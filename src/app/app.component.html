@@ -2,14 +2,14 @@
 <div class="app">
   
   <!-- Modern Navigation Bar -->
-  <nav class="navbar glass-dark">
+  <nav class="navbar">
     <div class="navbar-container">
       
       <!-- Logo - Clickable to go to home -->
       <div class="logo" (click)="goToHome()">
         <div class="logo-icon">⚡</div>
         <div class="logo-text">
-          <span class="gradient-text">Poké</span>
+          <span>Poké</span>
           <span>dex</span>
         </div>
         <div class="logo-badge">v2.0</div>
@@ -45,7 +45,7 @@
       <!-- Right Section -->
       <div class="nav-right">
         <!-- Theme Toggle -->
-        <button class="theme-toggle" (click)="toggleTheme()">
+        <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="'Toggle theme'">
           <span class="theme-icon">{{ isDarkMode() ? '🌙' : '☀️' }}</span>
         </button>
         
@@ -53,7 +53,7 @@
         <div class="trainer-card" (click)="goToProfile()">
           <div class="trainer-avatar">
             @if (trainer()?.avatarUrl) {
-              <img [src]="trainer()?.avatarUrl" alt="Trainer Avatar" class="avatar-image" (error)="onAvatarError($event)" />
+              <img [src]="trainer()?.avatarUrl" [alt]="trainer()?.name" class="avatar-image" (error)="onAvatarError($event)" />
             } @else {
               <span>{{ trainer()?.name?.charAt(0) || 'A' }}</span>
             }

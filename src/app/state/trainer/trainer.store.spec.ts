@@ -40,7 +40,16 @@ describe('TrainerStore', () => {
 
   it('should load teams successfully', (done) => {
     const mockTeams = [
-      { id: '1', name: 'Test Team', trainer_id: '1', pokemon_ids: [25, 6], created_at: '2024-01-01' }
+      { 
+        id: '1', 
+        name: 'Test Team', 
+        trainer_id: '1', 
+        pokemon_ids: [25, 6], 
+        pokemon_details: [],  // Added pokemon_details
+        created_at: '2024-01-01',
+        competitive_mode: false,
+        tier: null
+      }
     ];
 
     store.loadTeams().subscribe(teams => {
@@ -59,6 +68,7 @@ describe('TrainerStore', () => {
       name: 'New Team',
       trainerId: '1',
       pokemonIds: [25, 6],
+      pokemonDetails: [],  // Fixed: Added required pokemonDetails field
       competitiveMode: false,
       tier: null
     };
@@ -74,11 +84,96 @@ describe('TrainerStore', () => {
 
     store.createTeam(newTeam).subscribe(team => {
       expect(team.name).toBe('New Team');
+      expect(team.pokemonDetails).toEqual([]);  // Added expectation
       done();
     });
 
     const req = httpMock.expectOne('http://localhost:4000/teams');
     expect(req.request.method).toBe('POST');
-    req.flush({ id: '123', name: 'New Team', trainer_id: '1', pokemon_ids: [25, 6], created_at: new Date().toISOString() });
+    expect(req.request.body.pokemon_details).toEqual([]);  // Added verification
+    req.flush({ 
+      id: '123', 
+      name: 'New Team', 
+      trainer_id: '1', 
+      pokemon_ids: [25, 6], 
+      pokemon_details: [],  // Added pokemon_details
+      created_at: new Date().toISOString(),
+      competitive_mode: false,
+      tier: null
+    });
+  });
+
+  // Additional test for creating a team with pokemonDetails
+  it('should create a team with pokemon details', (done) => {
+    const mockPokemonDetails = [
+      {
+        pokemonId: 25,
+        nickname: 'Pikachu',
+        heldItem: 'Light Ball',
+        evs: {
+          hp: 4,
+          attack: 252,
+          defense: 0,
+          specialAttack: 0,
+          specialDefense: 0,
+          speed: 252
+        }
+      }
+    ];
+
+    const newTeam: CreateTeamInput = {
+      name: 'Competitive Team',
+      trainerId: '1',
+      pokemonIds: [25],
+      pokemonDetails: mockPokemonDetails,
+      competitiveMode: true,
+      tier: 'OU'
+    };
+
+    store.createTeam(newTeam).subscribe(team => {
+      expect(team.name).toBe('Competitive Team');
+      expect(team.competitiveMode).toBe(true);
+      expect(team.tier).toBe('OU');
+      expect(team.pokemonDetails).toEqual(mockPokemonDetails);
+      done();
+    });
+
+    const req = httpMock.expectOne('http://localhost:4000/teams');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.pokemon_details).toEqual(mockPokemonDetails);
+    expect(req.request.body.competitive_mode).toBe(true);
+    expect(req.request.body.tier).toBe('OU');
+    
+    req.flush({ 
+      id: '456', 
+      name: 'Competitive Team', 
+      trainer_id: '1', 
+      pokemon_ids: [25], 
+      pokemon_details: mockPokemonDetails,
+      created_at: new Date().toISOString(),
+      competitive_mode: true,
+      tier: 'OU'
+    });
+  });
+
+  it('should handle create team error', (done) => {
+    const newTeam: CreateTeamInput = {
+      name: 'Error Team',
+      trainerId: '1',
+      pokemonIds: [25],
+      pokemonDetails: [],  // Fixed: Added required field
+      competitiveMode: false,
+      tier: null
+    };
+
+    store.createTeam(newTeam).subscribe({
+      error: (error) => {
+        expect(error).toBeTruthy();
+        done();
+      }
+    });
+
+    const req = httpMock.expectOne('http://localhost:4000/teams');
+    req.error(new ErrorEvent('Network error'));
   });
 });
