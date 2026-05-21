@@ -12,7 +12,7 @@
 }
 
 /* ============================================
-   Loading Overlay - Centered & Compact
+   Loading Overlay - Full Coverage
    ============================================ */
 .loading-overlay {
   position: absolute;
@@ -20,14 +20,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 28px;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .loading-content {
@@ -65,7 +64,6 @@
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -164,7 +162,7 @@
   }
 }
 
-/* Dark theme select styling - Black background with white text */
+/* Dark theme select styling */
 .filter-select {
   background-color: #1a1a1a !important;
   color: #ffffff !important;
@@ -518,7 +516,7 @@
   text-align: center !important;
 }
 
-/* Total Stat Cell - Proper Vertical & Horizontal Alignment */
+/* Total Stat Cell */
 .total-stat-cell {
   text-align: center !important;
   vertical-align: middle !important;
@@ -546,134 +544,146 @@
    ============================================ */
 .pagination {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
-  padding: 20px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
   background: var(--bg-secondary, #1a1a1a);
   border-radius: 60px;
   margin-top: 16px;
 }
 
-.page-btn {
-  padding: 10px 28px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border: none;
+.pagination-left,
+.pagination-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.pagination-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-size-select {
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #2a2a2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
   border-radius: 40px;
-  font-weight: 600;
   font-size: 0.85rem;
-  color: white;
+  font-weight: 500;
+  color: var(--text-primary, white);
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  
+  &:hover {
+    border-color: #00f5ff;
   }
+  
+  &:focus {
+    outline: none;
+    border-color: #00f5ff;
+  }
+}
 
+.total-items {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.page-nav-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary, #2a2a2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, white);
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover:not(:disabled) {
+    background: rgba(0, 245, 255, 0.2);
+    border-color: #00f5ff;
+    transform: scale(1.05);
+  }
+  
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    transform: none;
   }
 }
 
-.page-info {
-  font-weight: 600;
-  color: var(--text-secondary, #a0a0a0);
-  background: var(--bg-tertiary, #2a2a2a);
-  padding: 8px 24px;
-  border-radius: 40px;
-  font-size: 0.85rem;
+.page-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  
+  .page-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #a0a0a0);
+  }
+  
+  .page-input {
+    width: 60px;
+    padding: 8px 4px;
+    text-align: center;
+    background: var(--bg-tertiary, #2a2a2a);
+    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, white);
+    
+    &:focus {
+      outline: none;
+      border-color: #00f5ff;
+    }
+  }
+  
+  .page-total {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #a0a0a0);
+  }
 }
 
-/* ============================================
-   Empty State
-   ============================================ */
-.no-data {
-  text-align: center !important;
-  padding: 60px !important;
-  color: var(--text-tertiary, #6b6b6b);
-  font-size: 1rem;
+.page-range {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a0a0a0);
+  background: var(--bg-tertiary, #2a2a2a);
+  padding: 8px 16px;
+  border-radius: 40px;
 }
 
 /* ============================================
    Type Colors
    ============================================ */
-.type-normal {
-  background: linear-gradient(135deg, #9099a1, #6b7280);
-}
-
-.type-fire {
-  background: linear-gradient(135deg, #ff9c54, #f97316);
-}
-
-.type-water {
-  background: linear-gradient(135deg, #4d90ff, #3b82f6);
-}
-
-.type-electric {
-  background: linear-gradient(135deg, #f4d23c, #eab308);
-  color: #1a1a1a;
-}
-
-.type-grass {
-  background: linear-gradient(135deg, #63bc5a, #22c55e);
-}
-
-.type-ice {
-  background: linear-gradient(135deg, #73cec0, #14b8a6);
-  color: #1a1a1a;
-}
-
-.type-fighting {
-  background: linear-gradient(135deg, #ce416b, #ef4444);
-}
-
-.type-poison {
-  background: linear-gradient(135deg, #aa6bc8, #a855f7);
-}
-
-.type-ground {
-  background: linear-gradient(135deg, #d97845, #ea580c);
-}
-
-.type-flying {
-  background: linear-gradient(135deg, #93a2e0, #8b5cf6);
-}
-
-.type-psychic {
-  background: linear-gradient(135deg, #ff6b76, #f43f5e);
-}
-
-.type-bug {
-  background: linear-gradient(135deg, #91c12f, #84cc16);
-}
-
-.type-rock {
-  background: linear-gradient(135deg, #c5b059, #eab308);
-}
-
-.type-ghost {
-  background: linear-gradient(135deg, #5269ad, #6366f1);
-}
-
-.type-dragon {
-  background: linear-gradient(135deg, #0b6dc3, #3b82f6);
-}
-
-.type-dark {
-  background: linear-gradient(135deg, #5a5366, #6b7280);
-}
-
-.type-steel {
-  background: linear-gradient(135deg, #5a8ea2, #64748b);
-}
-
-.type-fairy {
-  background: linear-gradient(135deg, #ec8fe6, #d946ef);
-  color: #1a1a1a;
-}
+.type-normal { background: linear-gradient(135deg, #9099a1, #6b7280); }
+.type-fire { background: linear-gradient(135deg, #ff9c54, #f97316); }
+.type-water { background: linear-gradient(135deg, #4d90ff, #3b82f6); }
+.type-electric { background: linear-gradient(135deg, #f4d23c, #eab308); color: #1a1a1a; }
+.type-grass { background: linear-gradient(135deg, #63bc5a, #22c55e); }
+.type-ice { background: linear-gradient(135deg, #73cec0, #14b8a6); color: #1a1a1a; }
+.type-fighting { background: linear-gradient(135deg, #ce416b, #ef4444); }
+.type-poison { background: linear-gradient(135deg, #aa6bc8, #a855f7); }
+.type-ground { background: linear-gradient(135deg, #d97845, #ea580c); }
+.type-flying { background: linear-gradient(135deg, #93a2e0, #8b5cf6); }
+.type-psychic { background: linear-gradient(135deg, #ff6b76, #f43f5e); }
+.type-bug { background: linear-gradient(135deg, #91c12f, #84cc16); }
+.type-rock { background: linear-gradient(135deg, #c5b059, #eab308); }
+.type-ghost { background: linear-gradient(135deg, #5269ad, #6366f1); }
+.type-dragon { background: linear-gradient(135deg, #0b6dc3, #3b82f6); }
+.type-dark { background: linear-gradient(135deg, #5a5366, #6b7280); }
+.type-steel { background: linear-gradient(135deg, #5a8ea2, #64748b); }
+.type-fairy { background: linear-gradient(135deg, #ec8fe6, #d946ef); color: #1a1a1a; }
 
 /* ============================================
    Add to Team Modal
@@ -882,13 +892,8 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
@@ -896,7 +901,6 @@
     opacity: 0;
     transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -949,11 +953,26 @@
     }
   }
 
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pagination-left,
+  .pagination-center,
+  .pagination-right {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .pagination-center {
+    flex-wrap: wrap;
+  }
+
   .pokedex-table {
     font-size: 0.75rem;
 
-    th,
-    td {
+    th, td {
       padding: 10px 6px;
     }
   }
@@ -980,7 +999,7 @@
 }
 
 /* ============================================
-   Light Theme Override - Complete Fix
+   Light Theme Override
    ============================================ */
 [data-theme="light"] {
   .pokedex-container {
@@ -988,18 +1007,24 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
   }
   
+  /* Loading overlay - light theme */
+  .loading-overlay {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+  }
+  
   .loading-content {
     background: #ffffff;
-    border-color: #f3f4f6;
+    border-color: #e2e8f0;
   }
   
   .loading-content p {
-    color: #6b7280;
+    color: #64748b;
   }
   
-  /* Filters Bar - Lighter background */
+  /* Filters Bar - White background for light theme */
   .sticky-filters-wrapper .filters-bar {
-    background: #f8fafc;
+    background: #ffffff;
     border-color: #e2e8f0;
     backdrop-filter: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -1014,10 +1039,9 @@
     }
   }
   
-  /* Search Input */
   .filter-input {
     color: #1e293b;
-    background: #ffffff;
+    background: #f8fafc;
     border-radius: 30px;
     padding: 0 16px;
     
@@ -1026,7 +1050,6 @@
     }
   }
   
-  /* Select Dropdowns - Light theme: White background, dark text */
   .filter-select {
     color: #1e293b !important;
     background-color: #ffffff !important;
@@ -1049,91 +1072,23 @@
     }
   }
   
-  /* Range Slider Labels & Values */
-  .range-value {
-    background: #eef2ff;
-    color: #4f46e5;
-    font-weight: 700;
-    border-radius: 20px;
-    padding: 4px 12px;
-  }
-  
-  .range-input {
-    background: #e2e8f0;
-    
-    &::-webkit-slider-thumb {
-      background: #4f46e5;
-      box-shadow: 0 0 6px rgba(79, 70, 229, 0.5);
-    }
-    
-    &::-moz-range-thumb {
-      background: #4f46e5;
-      box-shadow: 0 0 6px rgba(79, 70, 229, 0.5);
-    }
-  }
-  
-  .range-label {
-    color: #64748b;
-    font-weight: 500;
-  }
-  
-  /* Bulk Actions */
-  .bulk-count-badge {
-    background: #eef2ff;
-    color: #4f46e5;
-    font-weight: 700;
-  }
-  
-  .compact-add-btn {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-  }
-  
-  .compact-clear-btn {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #dc2626;
-    font-weight: 600;
-    
-    &:hover {
-      background: #fee2e2;
-    }
-  }
-  
-  /* Checkbox Styles */
-  .checkbox-label {
-    background: #ffffff;
-    border-color: #cbd5e1;
-    
-    &:hover {
-      border-color: #4f46e5;
-      background: #eef2ff;
-    }
-  }
-  
-  .pokemon-checkbox:checked + .checkbox-label {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    border-color: transparent;
-  }
-  
-  /* Table Header - Lighter */
+  /* Table Header - White background for light theme */
   .pokedex-table thead {
-    background: #f1f5f9;
+    background: #f8fafc;
     
     th {
       color: #4f46e5;
       border-bottom: 2px solid #4f46e5;
       font-weight: 800;
-      background: #f1f5f9;
+      background: #f8fafc;
       
       &:hover {
         color: #3730a3;
-        background: #e2e8f0;
+        background: #f1f5f9;
       }
     }
   }
   
-  /* Table Body */
   .pokedex-table tbody {
     tr {
       border-bottom-color: #f1f5f9;
@@ -1169,39 +1124,120 @@
     font-weight: 800;
   }
   
-  /* Pagination */
+  /* Pagination - Light theme */
   .pagination {
     background: #f8fafc;
   }
   
-  .page-info {
-    background: #f1f5f9;
-    color: #475569;
-    font-weight: 600;
+  .page-size-select {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #1e293b;
+    
+    &:hover {
+      border-color: #4f46e5;
+    }
   }
   
-  .page-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-weight: 600;
+  .total-items,
+  .page-label,
+  .page-total,
+  .page-range {
+    color: #64748b;
+  }
+  
+  .page-nav-btn {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #1e293b;
     
     &:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+      background: rgba(79, 70, 229, 0.1);
+      border-color: #4f46e5;
     }
+  }
+  
+  .page-input-group .page-input {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #1e293b;
+    
+    &:focus {
+      border-color: #4f46e5;
+    }
+  }
+  
+  .page-range {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  
+  /* Range Slider */
+  .range-value {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  
+  .range-input {
+    background: #e2e8f0;
+    
+    &::-webkit-slider-thumb {
+      background: #4f46e5;
+      box-shadow: 0 0 6px rgba(79, 70, 229, 0.5);
+    }
+  }
+  
+  .range-label {
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  /* Bulk Actions */
+  .bulk-count-badge {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 700;
+  }
+  
+  .compact-clear-btn {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+    
+    &:hover {
+      background: #fee2e2;
+    }
+  }
+  
+  /* Checkbox */
+  .checkbox-label {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    
+    &:hover {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+  }
+  
+  .pokemon-checkbox:checked + .checkbox-label {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent;
+  }
+  
+  .selection-indicator {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 700;
   }
   
   /* Modal */
   .modal-container {
     background: #ffffff;
     border-color: #f3f4f6;
-  }
-  
-  .modal-header {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    
-    h3 {
-      color: white;
-    }
   }
   
   .modal-content {
@@ -1213,70 +1249,16 @@
       color: #64748b;
     }
     
-    .form-group label {
-      color: #64748b;
-      font-weight: 700;
-    }
-    
     .form-select {
-      background: #ffffff;
+      background: #f8fafc;
       border-color: #e2e8f0;
       color: #1e293b;
-      font-weight: 500;
       
       option {
         background-color: #ffffff !important;
         color: #1e293b !important;
       }
     }
-    
-    .error-message {
-      background: #fef2f2;
-      color: #dc2626;
-      font-weight: 500;
-    }
-    
-    .success-message {
-      background: #ecfdf5;
-      color: #059669;
-      font-weight: 500;
-    }
-    
-    .warning-note {
-      background: #fffbeb;
-      color: #64748b;
-      
-      span {
-        color: #d97706;
-        font-weight: 700;
-      }
-    }
-  }
-  
-  .modal-footer {
-    background: #f8fafc;
-    border-top-color: #f1f5f9;
-  }
-  
-  .cancel-btn {
-    border-color: #e2e8f0;
-    color: #64748b;
-    font-weight: 600;
-    
-    &:hover {
-      background: #f1f5f9;
-    }
-  }
-  
-  .confirm-btn {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    font-weight: 600;
-  }
-  
-  /* Loading Overlay */
-  .loading-overlay {
-    background: rgba(255, 255, 255, 0.95);
   }
   
   .no-data {
@@ -1284,14 +1266,6 @@
     font-weight: 500;
   }
   
-  /* Selection Indicator */
-  .selection-indicator {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-weight: 700;
-  }
-  
-  /* Responsive */
   @media (max-width: 900px) {
     .filter-item {
       background: #ffffff;

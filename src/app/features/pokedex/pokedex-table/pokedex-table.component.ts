@@ -22,6 +22,9 @@ export class PokedexTableComponent implements OnInit {
   private trainerStore = inject(TrainerStore);
 
   @ViewChild('teamSelect') teamSelect!: ElementRef<HTMLSelectElement>;
+  
+  // Math reference for template
+  Math = Math;
 
   // UI state signals
   loading = signal<boolean>(true);
@@ -32,7 +35,7 @@ export class PokedexTableComponent implements OnInit {
   sortBy = signal<string>('id');
   sortDir = signal<'asc' | 'desc'>('asc');
   currentPage = signal<number>(1);
-  pageSize = signal<number>(10);
+  pageSize = signal<number>(25);
 
   // Multi-row selection signals
   selectedPokemonIds = signal<Set<number>>(new Set());
@@ -121,14 +124,31 @@ export class PokedexTableComponent implements OnInit {
   /**
    * Computed signal for total number of pages
    */
-  totalPages = computed(() => Math.ceil(this.filteredPokemon().length / this.pageSize()));
+  totalPages = computed(() => {
+    const total = this.filteredPokemon().length;
+    const size = this.pageSize();
+    return Math.max(1, Math.ceil(total / size));
+  });
 
   /**
    * Computed signal for paginated Pokémon
    */
   paginatedPokemon = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
-    return this.filteredPokemon().slice(start, start + this.pageSize());
+    const end = start + this.pageSize();
+    return this.filteredPokemon().slice(start, end);
+  });
+
+  /**
+   * Computed signal for the range of items being displayed
+   */
+  displayedRange = computed(() => {
+    const total = this.filteredPokemon().length;
+    const current = this.currentPage();
+    const size = this.pageSize();
+    const start = total === 0 ? 0 : (current - 1) * size + 1;
+    const end = Math.min(current * size, total);
+    return { start, end, total };
   });
 
   /**
@@ -140,19 +160,16 @@ export class PokedexTableComponent implements OnInit {
     this.loadUserTeams();
   }
 
-  // In pokedex-table.component.ts, replace the loadPokemon method:
-
   /**
-   * Loads Pokémon data - Get 1st generation (151 Pokémon)
+   * Loads ALL Pokémon data
    */
   private loadPokemon(): void {
-    this.pokemonStore.fetchPokemonList().subscribe({
+    this.pokemonStore.fetchAllPokemon().subscribe({
       next: (pokemon) => {
         this.allPokemon.set(pokemon);
         this.loading.set(false);
         console.log('Pokémon loaded:', pokemon.length);
 
-        // Log first few Pokémon to verify
         if (pokemon.length > 0) {
           console.log('First Pokémon:', pokemon[0].name, 'ID:', pokemon[0].id);
           console.log('Last Pokémon:', pokemon[pokemon.length - 1].name, 'ID:', pokemon[pokemon.length - 1].id);
@@ -164,6 +181,7 @@ export class PokedexTableComponent implements OnInit {
       }
     });
   }
+
   /**
    * Loads user's teams for the Add to Team dropdown
    */
@@ -184,7 +202,7 @@ export class PokedexTableComponent implements OnInit {
    */
   calculateTotalStats(pokemon: Pokemon): number {
     return pokemon.stats.hp + pokemon.stats.attack + pokemon.stats.defense +
-      pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
+           pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
   }
 
   /**
@@ -213,8 +231,35 @@ export class PokedexTableComponent implements OnInit {
   /**
    * Handles page size change
    */
-  onPageSizeChange(): void {
-    this.currentPage.set(1);
+  onPageSizeChange(newSize: number): void {
+    const size = Number(newSize);
+    if (isNaN(size) || size === this.pageSize()) return;
+    
+    // Store current first item index before changing page size
+    const currentFirstItemIndex = (this.currentPage() - 1) * this.pageSize();
+    
+    // Update page size
+    this.pageSize.set(size);
+    
+    // Calculate new page number to keep the same first item visible
+    let newPage = Math.floor(currentFirstItemIndex / size) + 1;
+    
+    // Get total pages with new page size
+    const total = this.filteredPokemon().length;
+    const maxPage = Math.max(1, Math.ceil(total / size));
+    
+    // Ensure new page is within bounds
+    if (newPage > maxPage) {
+      newPage = maxPage;
+    }
+    if (newPage < 1) {
+      newPage = 1;
+    }
+    
+    // Update current page
+    this.currentPage.set(newPage);
+    
+    console.log(`Page size changed to ${size}, new page: ${newPage}, max page: ${maxPage}`);
   }
 
   /**
@@ -236,7 +281,6 @@ export class PokedexTableComponent implements OnInit {
   previousPage(): void {
     if (this.currentPage() > 1) {
       this.currentPage.update(page => page - 1);
-      this.clearSelection();
     }
   }
 
@@ -246,7 +290,43 @@ export class PokedexTableComponent implements OnInit {
   nextPage(): void {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update(page => page + 1);
-      this.clearSelection();
+    }
+  }
+
+  /**
+   * Goes to first page
+   */
+  goToFirstPage(): void {
+    if (this.currentPage() !== 1) {
+      this.currentPage.set(1);
+    }
+  }
+
+  /**
+   * Goes to last page
+   */
+  goToLastPage(): void {
+    const lastPage = this.totalPages();
+    if (this.currentPage() !== lastPage && lastPage > 0) {
+      this.currentPage.set(lastPage);
+    }
+  }
+
+  /**
+   * Goes to a specific page number
+   */
+  goToPage(page: number): void {
+    const total = this.totalPages();
+    let targetPage = Number(page);
+    
+    if (isNaN(targetPage) || targetPage < 1) {
+      targetPage = 1;
+    } else if (targetPage > total) {
+      targetPage = total;
+    }
+    
+    if (this.currentPage() !== targetPage && targetPage >= 1 && targetPage <= total) {
+      this.currentPage.set(targetPage);
     }
   }
 
@@ -265,7 +345,6 @@ export class PokedexTableComponent implements OnInit {
 
     this.selectedPokemonIds.set(newSelection);
     this.showBulkActionBar.set(newSelection.size > 0);
-    console.log('Selection changed:', this.selectedPokemonIds().size);
   }
 
   /**
@@ -274,16 +353,12 @@ export class PokedexTableComponent implements OnInit {
   clearSelection(): void {
     this.selectedPokemonIds.set(new Set());
     this.showBulkActionBar.set(false);
-    console.log('Selection cleared');
   }
 
   /**
    * Opens Add to Team modal
    */
   openAddToTeamModal(): void {
-    console.log('openAddToTeamModal called');
-    console.log('Selected Pokémon count:', this.selectedPokemonIds().size);
-
     if (this.selectedPokemonIds().size === 0) {
       this.bulkAddError.set('Please select at least one Pokémon to add.');
       setTimeout(() => this.bulkAddError.set(null), 3000);
@@ -300,14 +375,12 @@ export class PokedexTableComponent implements OnInit {
     this.bulkAddError.set(null);
     this.bulkAddSuccess.set(null);
     this.showAddToTeamModal.set(true);
-    console.log('Modal opened');
   }
 
   /**
    * Closes Add to Team modal
    */
   closeAddToTeamModal(): void {
-    console.log('closeAddToTeamModal called');
     this.showAddToTeamModal.set(false);
     this.selectedTeamId.set('');
     this.bulkAddError.set(null);
@@ -319,8 +392,6 @@ export class PokedexTableComponent implements OnInit {
    * Adds selected Pokémon to selected team
    */
   addSelectedToTeam(): void {
-    console.log('addSelectedToTeam called');
-
     if (!this.selectedTeamId()) {
       this.bulkAddError.set('Please select a team.');
       return;
@@ -331,8 +402,6 @@ export class PokedexTableComponent implements OnInit {
       this.bulkAddError.set('Selected team not found.');
       return;
     }
-
-    console.log('Target team:', targetTeam.name);
 
     this.isAdding.set(true);
     this.bulkAddError.set(null);
@@ -374,15 +443,12 @@ export class PokedexTableComponent implements OnInit {
       }
     }
 
-    console.log('Updating team with:', { pokemonIds: newPokemonIds, pokemonDetails: newDetails });
-
     // Update team using the store's update method
     this.trainerStore.updateTeam(targetTeam.id, {
       pokemonIds: newPokemonIds,
       pokemonDetails: newDetails
     }).subscribe({
       next: () => {
-        console.log('Team updated successfully');
         this.isAdding.set(false);
         const message = `Added ${addedPokemon.length} Pokémon to "${targetTeam.name}".`;
         if (alreadyInTeam.length > 0) {

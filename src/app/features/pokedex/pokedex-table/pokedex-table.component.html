@@ -18,7 +18,6 @@
       <!-- Bulk Actions (Compact) -->
       @if (selectedPokemonIds().size > 0) {
         <div class="filter-item bulk-actions-compact">
-          <!-- <span class="bulk-count-badge">{{ selectedPokemonIds().size }} selected</span> -->
           <button class="compact-add-btn" (click)="openAddToTeamModal()" [disabled]="selectedPokemonIds().size > 6">
             ➕ Add to Team
           </button>
@@ -56,25 +55,16 @@
         <span class="range-label">Total Stats</span>
       </div>
       
-      <!-- Page Size Selector -->
-      <div class="filter-item">
-        <span class="filter-icon">📄</span>
-        <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); onPageSizeChange()" class="filter-select">
-          <option [value]="10">10 per page</option>
-          <option [value]="25">25 per page</option>
-          <option [value]="50">50 per page</option>
-          <option [value]="100">100 per page</option>
-        </select>
-      </div>
-      
     </div>
   </div>
   
   <!-- Loading Overlay -->
   @if (loading()) {
     <div class="loading-overlay">
-      <div class="pokeball-spinner"></div>
-      <p>Loading Pokémon...</p>
+      <div class="loading-content">
+        <div class="pokeball-spinner"></div>
+        <p>Loading Pokémon...</p>
+      </div>
     </div>
   }
   
@@ -169,26 +159,83 @@
     </table>
   </div>
   
-  <!-- Pagination Controls -->
-  @if (totalPages() > 1) {
+    <!-- Enhanced Pagination Controls -->
+  @if (totalPages() > 1 || filteredPokemon().length > 0) {
     <div class="pagination">
-      <button 
-        (click)="previousPage()" 
-        [disabled]="currentPage() === 1" 
-        class="page-btn">
-        ← Previous
-      </button>
-      
-      <div class="page-info">
-        Page {{ currentPage() }} of {{ totalPages() }}
+      <!-- Left Section: Page Size Selector -->
+      <div class="pagination-left">
+        <select 
+          [value]="pageSize()"
+          (change)="onPageSizeChange($any($event.target).value)" 
+          class="page-size-select">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+          <option [value]="200">200</option>
+        </select>
+        <span class="total-items">Total: {{ filteredPokemon().length }} Pokémon</span>
       </div>
       
-      <button 
-        (click)="nextPage()" 
-        [disabled]="currentPage() === totalPages()" 
-        class="page-btn">
-        Next →
-      </button>
+      <!-- Center Section: Pagination Controls -->
+      <div class="pagination-center">
+        <!-- First Page Button -->
+        <button 
+          (click)="goToFirstPage()" 
+          [disabled]="currentPage() === 1" 
+          class="page-nav-btn"
+          title="First Page">
+          «
+        </button>
+        
+        <!-- Previous Page Button -->
+        <button 
+          (click)="previousPage()" 
+          [disabled]="currentPage() === 1" 
+          class="page-nav-btn"
+          title="Previous Page">
+          ‹
+        </button>
+        
+        <!-- Page Number Input -->
+        <div class="page-input-group">
+          <span class="page-label">Page</span>
+          <input 
+            type="number" 
+            [value]="currentPage()"
+            (change)="goToPage($any($event.target).value)"
+            min="1" 
+            [max]="totalPages()"
+            class="page-input" />
+          <span class="page-total">of {{ totalPages() }}</span>
+        </div>
+        
+        <!-- Next Page Button -->
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage() === totalPages()" 
+          class="page-nav-btn"
+          title="Next Page">
+          ›
+        </button>
+        
+        <!-- Last Page Button -->
+        <button 
+          (click)="goToLastPage()" 
+          [disabled]="currentPage() === totalPages()" 
+          class="page-nav-btn"
+          title="Last Page">
+          »
+        </button>
+      </div>
+      
+      <!-- Right Section: Page Info -->
+      <div class="pagination-right">
+        <span class="page-range">
+          Showing {{ displayedRange().start }} - {{ displayedRange().end }} 
+          of {{ displayedRange().total }} Pokémon
+        </span>
+      </div>
     </div>
   }
   

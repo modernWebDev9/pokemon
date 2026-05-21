@@ -1,17 +1,32 @@
 // src/app/state/pokemon/pokemon.store.ts
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, forkJoin, of, from } from 'rxjs';
-import { map, catchError, tap, switchMap, concatMap, reduce, delay } from 'rxjs/operators';
-import { Pokemon, PokemonStats, PokemonSprites } from './pokemon.types';
+import { Observable, throwError, forkJoin, of } from 'rxjs';
+import { map, catchError, switchMap, delay, retry, tap } from 'rxjs/operators';
 
-// Re-export types for use in other files
-export type { Pokemon, PokemonStats, PokemonSprites } from './pokemon.types';
+export interface Pokemon {
+  id: number;
+  name: string;
+  height: number;
+  weight: number;
+  types: string[];
+  stats: {
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+  };
+  sprites: {
+    front_default: string;
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class PokemonStore {
   private http = inject(HttpClient);
-  private graphqlUrl = 'https://beta.pokeapi.co/graphql/v1beta';
+  private graphqlUrl = '/graphql'; // Use relative path with proxy
   
   // State signals
   private pokemonList = signal<Pokemon[]>([]);
@@ -28,39 +43,60 @@ export class PokemonStore {
   public readonly progress$ = this.progress.asReadonly();
   
   /**
-   * First, get the total count of all Pokémon
+   * Fetch a single Pokémon by ID using GraphQL
    */
-  private getTotalCount(): Observable<number> {
-    const countQuery = `
-      query GetTotalCount {
-        pokemon_v2_pokemon_aggregate {
-          aggregate {
-            count
+  fetchPokemonById(id: number): Observable<Pokemon | null> {
+    const query = `
+      query GetPokemonById($id: Int) {
+        pokemon_v2_pokemon(where: {id: {_eq: $id}}) {
+          id
+          name
+          height
+          weight
+          pokemon_v2_pokemontypes {
+            pokemon_v2_type {
+              name
+            }
+          }
+          pokemon_v2_pokemonstats {
+            base_stat
+            pokemon_v2_stat {
+              name
+            }
+          }
+          pokemon_v2_pokemonsprites {
+            sprites
           }
         }
       }
     `;
     
     return this.http.post<GraphQLResponse>(this.graphqlUrl, {
-      query: countQuery
+      query: query,
+      variables: { id }
     }).pipe(
+      retry(3),
+      delay(1000),
       map((response: GraphQLResponse) => {
         if (response.errors) {
           throw new Error(response.errors.map(e => e.message).join(', '));
         }
-        const total = response.data?.pokemon_v2_pokemon_aggregate?.aggregate?.count || 0;
-        console.log(`Total Pokémon available in API: ${total}`);
-        return total;
+        
+        const pokemonData = response.data?.pokemon_v2_pokemon?.[0];
+        if (!pokemonData) return null;
+        
+        return this.transformPokemonData([pokemonData])[0] || null;
       }),
       catchError((err) => {
-        console.error('Error getting total count:', err);
+        console.error(`Error fetching Pokémon ${id}:`, err);
+        this.error.set(err.message || 'Failed to fetch Pokémon');
         return throwError(() => err);
       })
     );
   }
   
   /**
-   * Fetch a batch of Pokémon using offset and limit
+   * Fetch Pokémon in batches using GraphQL
    */
   private fetchPokemonBatch(offset: number, limit: number): Observable<Pokemon[]> {
     const query = `
@@ -98,6 +134,8 @@ export class PokemonStore {
       query: query,
       variables: variables
     }).pipe(
+      retry(3),
+      delay(500),
       map((response: GraphQLResponse) => {
         if (response.errors) {
           throw new Error(response.errors.map(e => e.message).join(', '));
@@ -113,181 +151,132 @@ export class PokemonStore {
   }
   
   /**
-   * Fetch ALL Pokémon using sequential batches
-   * This ensures we get every single Pokémon
+   * Get total count of Pokémon from API
    */
-  fetchAllPokemon(): Observable<Pokemon[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    this.progress.set(0);
-    
-    const BATCH_SIZE = 100;
-    let allPokemon: Pokemon[] = [];
-    let currentOffset = 0;
-    let maxRetries = 3;
-    
-    const fetchNextBatch = (retryCount: number = 0): Observable<Pokemon[]> => {
-      return this.fetchPokemonBatch(currentOffset, BATCH_SIZE).pipe(
-        switchMap((pokemon: Pokemon[]) => {
-          if (pokemon.length === 0) {
-            // No more data, return all collected
-            console.log(`Finished fetching! Total Pokémon: ${allPokemon.length}`);
-            this.pokemonList.set(allPokemon);
-            this.totalCount.set(allPokemon.length);
-            this.loading.set(false);
-            this.progress.set(100);
-            return of(allPokemon);
-          }
-          
-          allPokemon = [...allPokemon, ...pokemon];
-          currentOffset += BATCH_SIZE;
-          
-          // Calculate progress (estimate based on known total ~1300)
-          const estimatedTotal = 1300;
-          const progressPercent = Math.min(Math.floor((currentOffset / estimatedTotal) * 100), 99);
-          this.progress.set(progressPercent);
-          
-          console.log(`Batch ${Math.ceil(currentOffset / BATCH_SIZE)}: Fetched ${pokemon.length} Pokémon (Total: ${allPokemon.length})`);
-          
-          // Small delay to avoid rate limiting
-          return of(null).pipe(
-            delay(100),
-            switchMap(() => fetchNextBatch())
-          );
-        }),
-        catchError((err) => {
-          if (retryCount < maxRetries) {
-            console.warn(`Retry ${retryCount + 1}/${maxRetries} for offset ${currentOffset}`);
-            this.progress.set(Math.max(this.progress() - 5, 0));
-            return of(null).pipe(
-              delay(1000),
-              switchMap(() => fetchNextBatch(retryCount + 1))
-            );
-          }
-          return throwError(() => err);
-        })
-      );
-    };
-    
-    return fetchNextBatch().pipe(
-      catchError((err) => {
-        console.error('Error fetching all Pokémon:', err);
-        this.error.set(err.message || 'Failed to fetch Pokémon');
-        this.loading.set(false);
-        return throwError(() => err);
-      })
-    );
-  }
-  
-  /**
-   * Fetch ALL Pokémon using parallel batches (faster but more memory intensive)
-   */
-  fetchAllPokemonParallel(): Observable<Pokemon[]> {
-    this.loading.set(true);
-    this.error.set(null);
-    this.progress.set(0);
-    
-    return this.getTotalCount().pipe(
-      switchMap((total: number) => {
-        this.totalCount.set(total);
-        console.log(`Total Pokémon to fetch: ${total}`);
-        
-        const BATCH_SIZE = 100;
-        const batchCount = Math.ceil(total / BATCH_SIZE);
-        const batches: Observable<Pokemon[]>[] = [];
-        
-        // Create all batch requests
-        for (let i = 0; i < batchCount; i++) {
-          const offset = i * BATCH_SIZE;
-          batches.push(this.fetchPokemonBatch(offset, BATCH_SIZE));
-        }
-        
-        // Execute all batches in parallel
-        return forkJoin(batches).pipe(
-          map((results: Pokemon[][]) => {
-            const allPokemon = results.flat().sort((a, b) => a.id - b.id);
-            this.pokemonList.set(allPokemon);
-            this.loading.set(false);
-            this.progress.set(100);
-            console.log(`Successfully fetched ${allPokemon.length} Pokémon in parallel`);
-            return allPokemon;
-          })
-        );
-      }),
-      catchError((err) => {
-        console.error('Error fetching all Pokémon in parallel:', err);
-        this.error.set(err.message || 'Failed to fetch Pokémon');
-        this.loading.set(false);
-        return throwError(() => err);
-      })
-    );
-  }
-  
-  /**
-   * Main method to fetch Pokémon list - gets ALL Pokémon
-   */
-  fetchPokemonList(limit?: number, offset?: number): Observable<Pokemon[]> {
-    // If specific limit/offset provided, use batch fetch
-    if (limit !== undefined && offset !== undefined) {
-      return this.fetchPokemonBatch(offset, limit);
-    }
-    // Default: fetch ALL Pokémon
-    return this.fetchAllPokemon();
-  }
-  
-  /**
-   * Fetch a specific Pokémon by ID
-   */
-  fetchPokemonById(id: number): Observable<Pokemon | null> {
-    // Try cache first
-    const cached = this.getPokemonById(id);
-    if (cached) {
-      return of(cached);
-    }
-    
-    const query = `
-      query GetPokemonById($id: Int) {
-        pokemon_v2_pokemon(where: {id: {_eq: $id}}) {
-          id
-          name
-          height
-          weight
-          pokemon_v2_pokemontypes {
-            pokemon_v2_type {
-              name
-            }
-          }
-          pokemon_v2_pokemonstats {
-            base_stat
-            pokemon_v2_stat {
-              name
-            }
-          }
-          pokemon_v2_pokemonsprites {
-            sprites
+  private getTotalCount(): Observable<number> {
+    const countQuery = `
+      query GetTotalCount {
+        pokemon_v2_pokemon_aggregate {
+          aggregate {
+            count
           }
         }
       }
     `;
     
     return this.http.post<GraphQLResponse>(this.graphqlUrl, {
-      query: query,
-      variables: { id }
+      query: countQuery
     }).pipe(
       map((response: GraphQLResponse) => {
         if (response.errors) {
           throw new Error(response.errors.map(e => e.message).join(', '));
         }
-        
-        const pokemonData = response.data?.pokemon_v2_pokemon?.[0];
-        if (!pokemonData) return null;
-        
-        const transformedPokemon = this.transformPokemonData([pokemonData]);
-        return transformedPokemon[0] || null;
+        return response.data?.pokemon_v2_pokemon_aggregate?.aggregate?.count || 0;
       }),
       catchError((err) => {
-        console.error('GraphQL Error:', err);
+        console.error('Error getting total count:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+  
+  /**
+   * Fetch Pokémon list with optional limit and offset
+   * If limit and offset are provided, fetches a specific batch
+   * Otherwise fetches all Pokémon
+   *
+   * @param limit - Number of Pokémon to fetch (optional)
+   * @param offset - Starting index for pagination (optional)
+   * @returns Observable<Pokemon[]> - Stream of Pokémon data
+   */
+  fetchPokemonList(limit?: number, offset?: number): Observable<Pokemon[]> {
+    // If specific limit/offset provided, fetch just that batch
+    if (limit !== undefined && offset !== undefined) {
+      this.loading.set(true);
+      return this.fetchPokemonBatch(offset, limit).pipe(
+        tap((pokemon: Pokemon[]) => {
+          // Merge with existing cache
+          const currentList = this.pokemonList();
+          const updatedList = [...currentList];
+          pokemon.forEach(p => {
+            const index = updatedList.findIndex(existing => existing.id === p.id);
+            if (index === -1) {
+              updatedList.push(p);
+            } else {
+              updatedList[index] = p;
+            }
+          });
+          updatedList.sort((a, b) => a.id - b.id);
+          this.pokemonList.set(updatedList);
+          this.loading.set(false);
+        }),
+        catchError((err) => {
+          this.loading.set(false);
+          this.error.set(err.message || 'Failed to fetch Pokémon');
+          return throwError(() => err);
+        })
+      );
+    }
+    
+    // Default: fetch ALL Pokémon
+    return this.fetchAllPokemon();
+  }
+  
+  /**
+   * Fetch ALL Pokémon using sequential batches
+   */
+  fetchAllPokemon(): Observable<Pokemon[]> {
+    this.loading.set(true);
+    this.error.set(null);
+    this.progress.set(0);
+    
+    const BATCH_SIZE = 50;
+    let allPokemon: Pokemon[] = [];
+    let currentOffset = 0;
+    
+    // First get total count, then fetch sequentially
+    return this.getTotalCount().pipe(
+      switchMap((total: number): Observable<Pokemon[]> => {
+        this.totalCount.set(total);
+        console.log(`Total Pokémon to fetch: ${total}`);
+        
+        // Create a recursive function to fetch batches sequentially
+        const fetchNextBatch = (): Observable<Pokemon[]> => {
+          return this.fetchPokemonBatch(currentOffset, BATCH_SIZE).pipe(
+            switchMap((pokemon: Pokemon[]) => {
+              if (pokemon.length === 0) {
+                // No more data, return all collected
+                console.log(`Finished fetching! Total Pokémon: ${allPokemon.length}`);
+                this.pokemonList.set(allPokemon);
+                this.loading.set(false);
+                this.progress.set(100);
+                return of(allPokemon);
+              }
+              
+              allPokemon = [...allPokemon, ...pokemon];
+              currentOffset += BATCH_SIZE;
+              
+              // Calculate progress
+              const progressPercent = Math.min(Math.floor((currentOffset / total) * 100), 100);
+              this.progress.set(progressPercent);
+              
+              console.log(`Batch ${Math.ceil(currentOffset / BATCH_SIZE)}: Fetched ${pokemon.length} Pokémon (Total: ${allPokemon.length})`);
+              
+              // Add delay between batches to avoid rate limiting
+              return of(null).pipe(
+                delay(100),
+                switchMap(() => fetchNextBatch())
+              );
+            })
+          );
+        };
+        
+        return fetchNextBatch();
+      }),
+      catchError((err) => {
+        console.error('Error fetching all Pokémon:', err);
         this.error.set(err.message || 'Failed to fetch Pokémon');
+        this.loading.set(false);
         return throwError(() => err);
       })
     );
