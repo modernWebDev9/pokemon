@@ -1,307 +1,410 @@
-/**
- * Pokemon Store - BehaviorSubject-based state management for Pokémon data
- * Handles caching, API calls, and state updates for the Pokédex feature
- */
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { map, catchError, retry, tap, shareReplay } from 'rxjs/operators';
-import { Apollo } from 'apollo-angular';
-import { GET_POKEMON_LIST, GET_POKEMON_DETAIL } from '../../core/graphql/pokemon.queries';
+// src/app/state/pokemon/pokemon.store.ts
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, throwError, forkJoin, of, from } from 'rxjs';
+import { map, catchError, tap, switchMap, concatMap, reduce, delay } from 'rxjs/operators';
+import { Pokemon, PokemonStats, PokemonSprites } from './pokemon.types';
 
-/**
- * Represents a Pokémon's base stats
- */
-export interface PokemonStats {
-  hp: number;
-  attack: number;
-  defense: number;
-  specialAttack: number;
-  specialDefense: number;
-  speed: number;
-}
-
-/**
- * Represents a Pokémon's sprite images
- */
-export interface PokemonSprites {
-  front_default: string;
-  front_shiny: string;
-}
-
-/**
- * Represents a complete Pokémon entity
- */
-export interface Pokemon {
-  id: number;
-  name: string;
-  height: number;
-  weight: number;
-  types: string[];
-  stats: PokemonStats;
-  sprites: PokemonSprites;
-}
-
-/**
- * State interface for Pokémon store
- */
-export interface PokemonState {
-  list: Pokemon[];
-  totalCount: number;
-  loading: boolean;
-  error: string | null;
-  cache: Map<number, Pokemon>;
-}
-
-/**
- * Initial state for Pokémon store
- */
-const INITIAL_STATE: PokemonState = {
-  list: [],
-  totalCount: 0,
-  loading: false,
-  error: null,
-  cache: new Map(),
-};
+// Re-export types for use in other files
+export type { Pokemon, PokemonStats, PokemonSprites } from './pokemon.types';
 
 @Injectable({ providedIn: 'root' })
 export class PokemonStore {
-  private apollo = inject(Apollo);
+  private http = inject(HttpClient);
+  private graphqlUrl = 'https://beta.pokeapi.co/graphql/v1beta';
   
-  private stateSubject = new BehaviorSubject<PokemonState>(INITIAL_STATE);
-  public state$ = this.stateSubject.asObservable();
+  // State signals
+  private pokemonList = signal<Pokemon[]>([]);
+  private loading = signal<boolean>(false);
+  private error = signal<string | null>(null);
+  private totalCount = signal<number>(0);
+  private progress = signal<number>(0);
   
-  /**
-   * Observable stream of Pokémon list
-   * Uses shareReplay(1) to cache the latest value for multiple subscribers
-   */
-  public readonly pokemonList$ = this.state$.pipe(
-    map(state => state.list),
-    shareReplay(1)
-  );
-  
-  /**
-   * Observable stream of loading state
-   */
-  public readonly loading$ = this.state$.pipe(map(state => state.loading));
+  // Public readonly signals
+  public readonly pokemonList$ = this.pokemonList.asReadonly();
+  public readonly loading$ = this.loading.asReadonly();
+  public readonly error$ = this.error.asReadonly();
+  public readonly totalCount$ = this.totalCount.asReadonly();
+  public readonly progress$ = this.progress.asReadonly();
   
   /**
-   * Observable stream of error state
+   * First, get the total count of all Pokémon
    */
-  public readonly error$ = this.state$.pipe(map(state => state.error));
-  
-  /**
-   * Observable stream of total Pokémon count
-   */
-  public readonly totalCount$ = this.state$.pipe(map(state => state.totalCount));
-
-  /**
-   * Fetches paginated Pokémon list from PokeAPI GraphQL endpoint
-   * Results are cached in the store to avoid redundant network calls
-   *
-   * @param limit - Number of Pokémon to fetch per page (default: 20)
-   * @param offset - Starting index for pagination (default: 0)
-   * @returns Observable<Pokemon[]> - Stream of Pokémon data
-   */
-  fetchPokemonList(limit: number = 20, offset: number = 0): Observable<Pokemon[]> {
-    console.log('Fetching Pokémon list: limit=' + limit + ', offset=' + offset);
+  private getTotalCount(): Observable<number> {
+    const countQuery = `
+      query GetTotalCount {
+        pokemon_v2_pokemon_aggregate {
+          aggregate {
+            count
+          }
+        }
+      }
+    `;
     
-    this.stateSubject.next({
-      ...this.stateSubject.value,
-      loading: true,
-      error: null,
-    });
-    
-    return this.apollo.query({
-      query: GET_POKEMON_LIST,
-      variables: { limit, offset },
-      fetchPolicy: 'network-only',
+    return this.http.post<GraphQLResponse>(this.graphqlUrl, {
+      query: countQuery
     }).pipe(
-      retry(3), // Retry failed API calls up to 3 times
-      map((result: any) => {
-        console.log('API Response received: ' + result.data?.pokemon_v2_pokemon?.length + ' pokémon');
-        
-        const rawPokemons = result.data?.pokemon_v2_pokemon || [];
-        const totalCount = result.data?.pokemon_v2_pokemon_aggregate?.aggregate?.count || 0;
-        
-        const pokemons = this.transformPokemonList(rawPokemons);
-        
-        const currentState = this.stateSubject.value;
-        pokemons.forEach(pokemon => {
-          currentState.cache.set(pokemon.id, pokemon);
-        });
-        
-        this.stateSubject.next({
-          ...currentState,
-          list: pokemons,
-          totalCount,
-          loading: false,
-        });
-        
-        return pokemons;
+      map((response: GraphQLResponse) => {
+        if (response.errors) {
+          throw new Error(response.errors.map(e => e.message).join(', '));
+        }
+        const total = response.data?.pokemon_v2_pokemon_aggregate?.aggregate?.count || 0;
+        console.log(`Total Pokémon available in API: ${total}`);
+        return total;
       }),
-      catchError((error) => {
-        console.error('Failed to fetch Pokémon list:', error);
-        this.stateSubject.next({
-          ...this.stateSubject.value,
-          loading: false,
-          error: error.message || 'Failed to fetch Pokémon list',
-        });
-        return throwError(() => error);
+      catchError((err) => {
+        console.error('Error getting total count:', err);
+        return throwError(() => err);
       })
     );
   }
-
+  
   /**
-   * Fetches single Pokémon details by ID
-   * Uses cache if available to minimize API calls
-   *
-   * @param id - Pokémon ID number
-   * @returns Observable<Pokemon> - Stream of Pokémon detail data
+   * Fetch a batch of Pokémon using offset and limit
    */
-  getPokemonById(id: number): Observable<Pokemon> {
-    const cached = this.stateSubject.value.cache.get(id);
+  private fetchPokemonBatch(offset: number, limit: number): Observable<Pokemon[]> {
+    const query = `
+      query GetPokemonBatch($limit: Int, $offset: Int) {
+        pokemon_v2_pokemon(
+          limit: $limit, 
+          offset: $offset, 
+          order_by: {id: asc}
+        ) {
+          id
+          name
+          height
+          weight
+          pokemon_v2_pokemontypes {
+            pokemon_v2_type {
+              name
+            }
+          }
+          pokemon_v2_pokemonstats {
+            base_stat
+            pokemon_v2_stat {
+              name
+            }
+          }
+          pokemon_v2_pokemonsprites {
+            sprites
+          }
+        }
+      }
+    `;
+    
+    const variables = { limit, offset };
+    
+    return this.http.post<GraphQLResponse>(this.graphqlUrl, {
+      query: query,
+      variables: variables
+    }).pipe(
+      map((response: GraphQLResponse) => {
+        if (response.errors) {
+          throw new Error(response.errors.map(e => e.message).join(', '));
+        }
+        const pokemonData = response.data?.pokemon_v2_pokemon || [];
+        return this.transformPokemonData(pokemonData);
+      }),
+      catchError((err) => {
+        console.error(`Error fetching batch at offset ${offset}:`, err);
+        return throwError(() => err);
+      })
+    );
+  }
+  
+  /**
+   * Fetch ALL Pokémon using sequential batches
+   * This ensures we get every single Pokémon
+   */
+  fetchAllPokemon(): Observable<Pokemon[]> {
+    this.loading.set(true);
+    this.error.set(null);
+    this.progress.set(0);
+    
+    const BATCH_SIZE = 100;
+    let allPokemon: Pokemon[] = [];
+    let currentOffset = 0;
+    let maxRetries = 3;
+    
+    const fetchNextBatch = (retryCount: number = 0): Observable<Pokemon[]> => {
+      return this.fetchPokemonBatch(currentOffset, BATCH_SIZE).pipe(
+        switchMap((pokemon: Pokemon[]) => {
+          if (pokemon.length === 0) {
+            // No more data, return all collected
+            console.log(`Finished fetching! Total Pokémon: ${allPokemon.length}`);
+            this.pokemonList.set(allPokemon);
+            this.totalCount.set(allPokemon.length);
+            this.loading.set(false);
+            this.progress.set(100);
+            return of(allPokemon);
+          }
+          
+          allPokemon = [...allPokemon, ...pokemon];
+          currentOffset += BATCH_SIZE;
+          
+          // Calculate progress (estimate based on known total ~1300)
+          const estimatedTotal = 1300;
+          const progressPercent = Math.min(Math.floor((currentOffset / estimatedTotal) * 100), 99);
+          this.progress.set(progressPercent);
+          
+          console.log(`Batch ${Math.ceil(currentOffset / BATCH_SIZE)}: Fetched ${pokemon.length} Pokémon (Total: ${allPokemon.length})`);
+          
+          // Small delay to avoid rate limiting
+          return of(null).pipe(
+            delay(100),
+            switchMap(() => fetchNextBatch())
+          );
+        }),
+        catchError((err) => {
+          if (retryCount < maxRetries) {
+            console.warn(`Retry ${retryCount + 1}/${maxRetries} for offset ${currentOffset}`);
+            this.progress.set(Math.max(this.progress() - 5, 0));
+            return of(null).pipe(
+              delay(1000),
+              switchMap(() => fetchNextBatch(retryCount + 1))
+            );
+          }
+          return throwError(() => err);
+        })
+      );
+    };
+    
+    return fetchNextBatch().pipe(
+      catchError((err) => {
+        console.error('Error fetching all Pokémon:', err);
+        this.error.set(err.message || 'Failed to fetch Pokémon');
+        this.loading.set(false);
+        return throwError(() => err);
+      })
+    );
+  }
+  
+  /**
+   * Fetch ALL Pokémon using parallel batches (faster but more memory intensive)
+   */
+  fetchAllPokemonParallel(): Observable<Pokemon[]> {
+    this.loading.set(true);
+    this.error.set(null);
+    this.progress.set(0);
+    
+    return this.getTotalCount().pipe(
+      switchMap((total: number) => {
+        this.totalCount.set(total);
+        console.log(`Total Pokémon to fetch: ${total}`);
+        
+        const BATCH_SIZE = 100;
+        const batchCount = Math.ceil(total / BATCH_SIZE);
+        const batches: Observable<Pokemon[]>[] = [];
+        
+        // Create all batch requests
+        for (let i = 0; i < batchCount; i++) {
+          const offset = i * BATCH_SIZE;
+          batches.push(this.fetchPokemonBatch(offset, BATCH_SIZE));
+        }
+        
+        // Execute all batches in parallel
+        return forkJoin(batches).pipe(
+          map((results: Pokemon[][]) => {
+            const allPokemon = results.flat().sort((a, b) => a.id - b.id);
+            this.pokemonList.set(allPokemon);
+            this.loading.set(false);
+            this.progress.set(100);
+            console.log(`Successfully fetched ${allPokemon.length} Pokémon in parallel`);
+            return allPokemon;
+          })
+        );
+      }),
+      catchError((err) => {
+        console.error('Error fetching all Pokémon in parallel:', err);
+        this.error.set(err.message || 'Failed to fetch Pokémon');
+        this.loading.set(false);
+        return throwError(() => err);
+      })
+    );
+  }
+  
+  /**
+   * Main method to fetch Pokémon list - gets ALL Pokémon
+   */
+  fetchPokemonList(limit?: number, offset?: number): Observable<Pokemon[]> {
+    // If specific limit/offset provided, use batch fetch
+    if (limit !== undefined && offset !== undefined) {
+      return this.fetchPokemonBatch(offset, limit);
+    }
+    // Default: fetch ALL Pokémon
+    return this.fetchAllPokemon();
+  }
+  
+  /**
+   * Fetch a specific Pokémon by ID
+   */
+  fetchPokemonById(id: number): Observable<Pokemon | null> {
+    // Try cache first
+    const cached = this.getPokemonById(id);
     if (cached) {
-      console.log('Returning cached Pokémon: ' + cached.name);
       return of(cached);
     }
     
-    return this.apollo.query({
-      query: GET_POKEMON_DETAIL,
-      variables: { id },
-    }).pipe(
-      retry(3), // Retry failed API calls up to 3 times
-      map((result: any) => {
-        const rawPokemon = result.data?.pokemon_v2_pokemon?.[0];
-        if (!rawPokemon) {
-          throw new Error('Pokémon with ID ' + id + ' not found');
+    const query = `
+      query GetPokemonById($id: Int) {
+        pokemon_v2_pokemon(where: {id: {_eq: $id}}) {
+          id
+          name
+          height
+          weight
+          pokemon_v2_pokemontypes {
+            pokemon_v2_type {
+              name
+            }
+          }
+          pokemon_v2_pokemonstats {
+            base_stat
+            pokemon_v2_stat {
+              name
+            }
+          }
+          pokemon_v2_pokemonsprites {
+            sprites
+          }
         }
-        const pokemon = this.transformPokemonDetail(rawPokemon);
+      }
+    `;
+    
+    return this.http.post<GraphQLResponse>(this.graphqlUrl, {
+      query: query,
+      variables: { id }
+    }).pipe(
+      map((response: GraphQLResponse) => {
+        if (response.errors) {
+          throw new Error(response.errors.map(e => e.message).join(', '));
+        }
         
-        const currentState = this.stateSubject.value;
-        currentState.cache.set(pokemon.id, pokemon);
-        this.stateSubject.next(currentState);
+        const pokemonData = response.data?.pokemon_v2_pokemon?.[0];
+        if (!pokemonData) return null;
         
-        return pokemon;
+        const transformedPokemon = this.transformPokemonData([pokemonData]);
+        return transformedPokemon[0] || null;
       }),
-      catchError((error) => {
-        this.stateSubject.next({
-          ...this.stateSubject.value,
-          error: 'Failed to fetch Pokémon ' + id + ': ' + error.message,
-        });
-        return throwError(() => error);
+      catchError((err) => {
+        console.error('GraphQL Error:', err);
+        this.error.set(err.message || 'Failed to fetch Pokémon');
+        return throwError(() => err);
       })
     );
   }
-
+  
   /**
-   * Transforms raw API response to Pokemon model array
-   *
-   * @param rawData - Raw GraphQL response data
-   * @returns Transformed Pokemon array
+   * Transform GraphQL response to Pokemon interface
    */
-  private transformPokemonList(rawData: any[]): Pokemon[] {
-    return rawData.map(item => ({
-      id: item.id,
-      name: this.capitalizeName(item.name),
-      height: item.height / 10,
-      weight: item.weight / 10,
-      types: item.pokemon_v2_pokemontypes?.map((t: any) => t.pokemon_v2_type.name) || [],
-      stats: this.extractStats(item.pokemon_v2_pokemonstats || []),
-      sprites: this.extractSprites(item.pokemon_v2_pokemonsprites?.[0]?.sprites),
-    }));
-  }
-
-  /**
-   * Transforms raw API response to detailed Pokemon model
-   *
-   * @param rawData - Raw GraphQL detail response
-   * @returns Transformed Pokemon with full details
-   */
-  private transformPokemonDetail(rawData: any): Pokemon {
-    return {
-      id: rawData.id,
-      name: this.capitalizeName(rawData.name),
-      height: rawData.height / 10,
-      weight: rawData.weight / 10,
-      types: rawData.pokemon_v2_pokemontypes?.map((t: any) => t.pokemon_v2_type.name) || [],
-      stats: this.extractStats(rawData.pokemon_v2_pokemonstats || []),
-      sprites: this.extractSprites(rawData.pokemon_v2_pokemonsprites?.[0]?.sprites),
-    };
-  }
-
-  /**
-   * Extracts and parses stats from API response
-   * Maps API stat names to our internal stat model
-   *
-   * @param stats - Raw stats array from API
-   * @returns Parsed PokemonStats object
-   */
-  private extractStats(stats: any[]): PokemonStats {
-    const result: PokemonStats = {
-      hp: 0,
-      attack: 0,
-      defense: 0,
-      specialAttack: 0,
-      specialDefense: 0,
-      speed: 0,
-    };
-    
-    stats.forEach(stat => {
-      const statName = stat.pokemon_v2_stat?.name;
-      switch (statName) {
-        case 'hp': result.hp = stat.base_stat; break;
-        case 'attack': result.attack = stat.base_stat; break;
-        case 'defense': result.defense = stat.base_stat; break;
-        case 'special-attack': result.specialAttack = stat.base_stat; break;
-        case 'special-defense': result.specialDefense = stat.base_stat; break;
-        case 'speed': result.speed = stat.base_stat; break;
+  private transformPokemonData(data: any[]): Pokemon[] {
+    return data.map((pokemon: any) => {
+      // Extract types
+      const types = pokemon.pokemon_v2_pokemontypes?.map(
+        (t: any) => t.pokemon_v2_type.name
+      ) || [];
+      
+      // Extract stats
+      const statsMap: Record<string, number> = {};
+      pokemon.pokemon_v2_pokemonstats?.forEach((stat: any) => {
+        const statName = stat.pokemon_v2_stat.name;
+        let mappedName = statName;
+        
+        switch (statName) {
+          case 'hp': mappedName = 'hp'; break;
+          case 'attack': mappedName = 'attack'; break;
+          case 'defense': mappedName = 'defense'; break;
+          case 'special-attack': mappedName = 'specialAttack'; break;
+          case 'special-defense': mappedName = 'specialDefense'; break;
+          case 'speed': mappedName = 'speed'; break;
+          default: mappedName = statName;
+        }
+        statsMap[mappedName] = stat.base_stat;
+      });
+      
+      // Extract sprites
+      let front_default = '';
+      if (pokemon.pokemon_v2_pokemonsprites && pokemon.pokemon_v2_pokemonsprites.length > 0) {
+        const spritesData = pokemon.pokemon_v2_pokemonsprites[0].sprites;
+        if (typeof spritesData === 'string') {
+          try {
+            const parsed = JSON.parse(spritesData);
+            front_default = parsed.front_default || '';
+          } catch {
+            front_default = '';
+          }
+        } else if (typeof spritesData === 'object' && spritesData !== null) {
+          front_default = spritesData.front_default || '';
+        }
       }
-    });
-    
-    return result;
-  }
-
-  /**
-   * Extracts and parses sprites from API response
-   * Handles both JSON string and object formats
-   *
-   * @param spritesJson - Raw sprites JSON string or object
-   * @returns Parsed PokemonSprites object
-   */
-  private extractSprites(spritesJson: any): PokemonSprites {
-    try {
-      const sprites = typeof spritesJson === 'string' ? JSON.parse(spritesJson) : spritesJson;
+      
+      // Fallback sprite URL
+      if (!front_default) {
+        front_default = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+      }
+      
       return {
-        front_default: sprites?.front_default || '',
-        front_shiny: sprites?.front_shiny || '',
+        id: pokemon.id,
+        name: pokemon.name,
+        height: pokemon.height || 0,
+        weight: pokemon.weight || 0,
+        types: types,
+        stats: {
+          hp: statsMap['hp'] || 0,
+          attack: statsMap['attack'] || 0,
+          defense: statsMap['defense'] || 0,
+          specialAttack: statsMap['specialAttack'] || 0,
+          specialDefense: statsMap['specialDefense'] || 0,
+          speed: statsMap['speed'] || 0
+        },
+        sprites: {
+          front_default: front_default
+        }
       };
-    } catch {
-      return {
-        front_default: '',
-        front_shiny: '',
-      };
-    }
-  }
-
-  /**
-   * Capitalizes Pokémon name (e.g., "pikachu" -> "Pikachu")
-   *
-   * @param name - Raw Pokémon name
-   * @returns Capitalized name
-   */
-  private capitalizeName(name: string): string {
-    if (!name) return '';
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  }
-
-  /**
-   * Clears all cached Pokémon data
-   * Useful for testing or when cache needs to be refreshed
-   */
-  clearCache(): void {
-    this.stateSubject.next({
-      ...this.stateSubject.value,
-      cache: new Map(),
     });
   }
+  
+  /**
+   * Get Pokémon by ID from cache
+   */
+  getPokemonById(id: number): Pokemon | undefined {
+    return this.pokemonList().find(p => p.id === id);
+  }
+  
+  /**
+   * Get Pokémon by name from cache
+   */
+  getPokemonByName(name: string): Pokemon | undefined {
+    return this.pokemonList().find(p => p.name.toLowerCase() === name.toLowerCase());
+  }
+  
+  /**
+   * Clear error state
+   */
+  clearError(): void {
+    this.error.set(null);
+  }
+  
+  /**
+   * Reset store state
+   */
+  reset(): void {
+    this.pokemonList.set([]);
+    this.loading.set(false);
+    this.error.set(null);
+    this.totalCount.set(0);
+    this.progress.set(0);
+  }
+}
+
+// GraphQL response interfaces
+interface GraphQLResponse {
+  data?: {
+    pokemon_v2_pokemon?: any[];
+    pokemon_v2_pokemon_aggregate?: {
+      aggregate: {
+        count: number;
+      };
+    };
+  };
+  errors?: Array<{ message: string }>;
 }

@@ -10,7 +10,9 @@ export interface PokemonStats {
 
 export interface PokemonSprites {
   front_default: string;
-  front_shiny: string;
+  back_default?: string;
+  front_shiny?: string;
+  back_shiny?: string;
 }
 
 export interface Pokemon {
@@ -28,5 +30,5 @@ export interface PokemonState {
   totalCount: number;
   loading: boolean;
   error: string | null;
-  cache: Map<number, Pokemon>;
+  progress: number;
 }

@@ -20,9 +20,9 @@ import { PokemonDetailComponent } from '../pokemon-detail/pokemon-detail.compone
 export class PokedexTableComponent implements OnInit {
   private pokemonStore = inject(PokemonStore);
   private trainerStore = inject(TrainerStore);
-  
+
   @ViewChild('teamSelect') teamSelect!: ElementRef<HTMLSelectElement>;
-  
+
   // UI state signals
   loading = signal<boolean>(true);
   searchTerm = signal<string>('');
@@ -33,23 +33,23 @@ export class PokedexTableComponent implements OnInit {
   sortDir = signal<'asc' | 'desc'>('asc');
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
-  
+
   // Multi-row selection signals
   selectedPokemonIds = signal<Set<number>>(new Set());
   showBulkActionBar = signal<boolean>(false);
-  
+
   // Add to team modal signals
   showAddToTeamModal = signal<boolean>(false);
   selectedTeamId = signal<string>('');
   bulkAddError = signal<string | null>(null);
   bulkAddSuccess = signal<string | null>(null);
   isAdding = signal<boolean>(false);
-  
+
   // Data signals
   allPokemon = signal<Pokemon[]>([]);
   userTeams = signal<Team[]>([]);
   selectedPokemon = signal<Pokemon | null>(null);
-  
+
   /**
    * Computed signal for available Pokémon types
    */
@@ -58,7 +58,7 @@ export class PokedexTableComponent implements OnInit {
     this.allPokemon().forEach(p => p.types.forEach(t => types.add(t)));
     return Array.from(types).sort();
   });
-  
+
   /**
    * Computed signal for filtered and sorted Pokémon
    */
@@ -66,26 +66,26 @@ export class PokedexTableComponent implements OnInit {
     let results = [...this.allPokemon()];
     const search = this.searchTerm().toLowerCase();
     const type = this.selectedType();
-    
+
     if (search.length >= 2) {
       results = results.filter(p => p.name.toLowerCase().includes(search));
     }
-    
+
     if (type) {
       results = results.filter(p => p.types.includes(type));
     }
-    
+
     results = results.filter(p => {
       const total = this.calculateTotalStats(p);
       return total >= this.minStats() && total <= this.maxStats();
     });
-    
+
     results.sort((a, b) => {
       const sortBy = this.sortBy();
       const sortDir = this.sortDir();
-      
+
       let aVal: any, bVal: any;
-      
+
       switch (sortBy) {
         case 'id':
           aVal = a.id;
@@ -103,13 +103,13 @@ export class PokedexTableComponent implements OnInit {
           aVal = a.stats[sortBy as keyof typeof a.stats];
           bVal = b.stats[sortBy as keyof typeof b.stats];
       }
-      
+
       return sortDir === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
-    
+
     return results;
   });
-  
+
   /**
    * Computed signal for selected Pokémon objects
    */
@@ -117,12 +117,12 @@ export class PokedexTableComponent implements OnInit {
     const selectedIds = this.selectedPokemonIds();
     return this.allPokemon().filter(p => selectedIds.has(p.id));
   });
-  
+
   /**
    * Computed signal for total number of pages
    */
   totalPages = computed(() => Math.ceil(this.filteredPokemon().length / this.pageSize()));
-  
+
   /**
    * Computed signal for paginated Pokémon
    */
@@ -130,7 +130,7 @@ export class PokedexTableComponent implements OnInit {
     const start = (this.currentPage() - 1) * this.pageSize();
     return this.filteredPokemon().slice(start, start + this.pageSize());
   });
-  
+
   /**
    * Initializes component
    */
@@ -139,16 +139,24 @@ export class PokedexTableComponent implements OnInit {
     this.loadPokemon();
     this.loadUserTeams();
   }
-  
+
+  // In pokedex-table.component.ts, replace the loadPokemon method:
+
   /**
-   * Loads Pokémon data
+   * Loads Pokémon data - Get 1st generation (151 Pokémon)
    */
   private loadPokemon(): void {
-    this.pokemonStore.fetchPokemonList(151, 0).subscribe({
+    this.pokemonStore.fetchPokemonList().subscribe({
       next: (pokemon) => {
         this.allPokemon.set(pokemon);
         this.loading.set(false);
         console.log('Pokémon loaded:', pokemon.length);
+
+        // Log first few Pokémon to verify
+        if (pokemon.length > 0) {
+          console.log('First Pokémon:', pokemon[0].name, 'ID:', pokemon[0].id);
+          console.log('Last Pokémon:', pokemon[pokemon.length - 1].name, 'ID:', pokemon[pokemon.length - 1].id);
+        }
       },
       error: (error) => {
         console.error('Error loading Pokémon:', error);
@@ -156,7 +164,6 @@ export class PokedexTableComponent implements OnInit {
       }
     });
   }
-  
   /**
    * Loads user's teams for the Add to Team dropdown
    */
@@ -171,15 +178,15 @@ export class PokedexTableComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Calculates total base stats for a Pokémon
    */
   calculateTotalStats(pokemon: Pokemon): number {
     return pokemon.stats.hp + pokemon.stats.attack + pokemon.stats.defense +
-           pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
+      pokemon.stats.specialAttack + pokemon.stats.specialDefense + pokemon.stats.speed;
   }
-  
+
   /**
    * Handles search term change
    */
@@ -187,7 +194,7 @@ export class PokedexTableComponent implements OnInit {
     this.currentPage.set(1);
     this.clearSelection();
   }
-  
+
   /**
    * Handles type filter change
    */
@@ -195,21 +202,21 @@ export class PokedexTableComponent implements OnInit {
     this.currentPage.set(1);
     this.clearSelection();
   }
-  
+
   /**
    * Handles stats range change
    */
   onStatsChange(): void {
     this.currentPage.set(1);
   }
-  
+
   /**
    * Handles page size change
    */
   onPageSizeChange(): void {
     this.currentPage.set(1);
   }
-  
+
   /**
    * Sorts table by column
    */
@@ -222,7 +229,7 @@ export class PokedexTableComponent implements OnInit {
     }
     this.currentPage.set(1);
   }
-  
+
   /**
    * Navigates to previous page
    */
@@ -232,7 +239,7 @@ export class PokedexTableComponent implements OnInit {
       this.clearSelection();
     }
   }
-  
+
   /**
    * Navigates to next page
    */
@@ -242,25 +249,25 @@ export class PokedexTableComponent implements OnInit {
       this.clearSelection();
     }
   }
-  
+
   /**
    * Toggles selection for a single Pokémon
    */
   toggleSelection(pokemonId: number, event: Event): void {
     event.stopPropagation();
     const newSelection = new Set(this.selectedPokemonIds());
-    
+
     if (newSelection.has(pokemonId)) {
       newSelection.delete(pokemonId);
     } else {
       newSelection.add(pokemonId);
     }
-    
+
     this.selectedPokemonIds.set(newSelection);
     this.showBulkActionBar.set(newSelection.size > 0);
     console.log('Selection changed:', this.selectedPokemonIds().size);
   }
-  
+
   /**
    * Clears all selections
    */
@@ -269,33 +276,33 @@ export class PokedexTableComponent implements OnInit {
     this.showBulkActionBar.set(false);
     console.log('Selection cleared');
   }
-  
+
   /**
    * Opens Add to Team modal
    */
   openAddToTeamModal(): void {
     console.log('openAddToTeamModal called');
     console.log('Selected Pokémon count:', this.selectedPokemonIds().size);
-    
+
     if (this.selectedPokemonIds().size === 0) {
       this.bulkAddError.set('Please select at least one Pokémon to add.');
       setTimeout(() => this.bulkAddError.set(null), 3000);
       return;
     }
-    
+
     if (this.userTeams().length === 0) {
       this.bulkAddError.set('No teams available. Please create a team first in Team Builder.');
       setTimeout(() => this.bulkAddError.set(null), 3000);
       return;
     }
-    
+
     this.selectedTeamId.set('');
     this.bulkAddError.set(null);
     this.bulkAddSuccess.set(null);
     this.showAddToTeamModal.set(true);
     console.log('Modal opened');
   }
-  
+
   /**
    * Closes Add to Team modal
    */
@@ -307,35 +314,35 @@ export class PokedexTableComponent implements OnInit {
     this.bulkAddSuccess.set(null);
     this.isAdding.set(false);
   }
-  
+
   /**
    * Adds selected Pokémon to selected team
    */
   addSelectedToTeam(): void {
     console.log('addSelectedToTeam called');
-    
+
     if (!this.selectedTeamId()) {
       this.bulkAddError.set('Please select a team.');
       return;
     }
-    
+
     const targetTeam = this.userTeams().find(t => t.id === this.selectedTeamId());
     if (!targetTeam) {
       this.bulkAddError.set('Selected team not found.');
       return;
     }
-    
+
     console.log('Target team:', targetTeam.name);
-    
+
     this.isAdding.set(true);
     this.bulkAddError.set(null);
-    
+
     const selectedPokemon = this.selectedPokemonObjects();
     const currentPokemonIds = targetTeam.pokemonIds || [];
     const newPokemonIds = [...currentPokemonIds];
     const addedPokemon: string[] = [];
     const alreadyInTeam: string[] = [];
-    
+
     // Add new Pokémon (max 6 total)
     for (const pokemon of selectedPokemon) {
       if (!newPokemonIds.includes(pokemon.id)) {
@@ -351,11 +358,11 @@ export class PokedexTableComponent implements OnInit {
         alreadyInTeam.push(pokemon.name);
       }
     }
-    
+
     // Create updated Pokémon details with proper structure
     const existingDetails = targetTeam.pokemonDetails || [];
     const newDetails = [...existingDetails];
-    
+
     for (const pokemon of selectedPokemon) {
       if (!existingDetails.some(d => d.pokemonId === pokemon.id)) {
         newDetails.push({
@@ -366,9 +373,9 @@ export class PokedexTableComponent implements OnInit {
         });
       }
     }
-    
+
     console.log('Updating team with:', { pokemonIds: newPokemonIds, pokemonDetails: newDetails });
-    
+
     // Update team using the store's update method
     this.trainerStore.updateTeam(targetTeam.id, {
       pokemonIds: newPokemonIds,
@@ -383,13 +390,13 @@ export class PokedexTableComponent implements OnInit {
         } else {
           this.bulkAddSuccess.set(message);
         }
-        
+
         // Clear selection after successful add
         this.clearSelection();
-        
+
         // Reload teams to refresh the list
         this.loadUserTeams();
-        
+
         setTimeout(() => {
           this.closeAddToTeamModal();
         }, 1500);
@@ -401,21 +408,21 @@ export class PokedexTableComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Handles Pokémon row click to show detail panel
    */
   onPokemonClick(pokemon: Pokemon): void {
     this.selectedPokemon.set(pokemon);
   }
-  
+
   /**
    * Closes Pokémon detail panel
    */
   closeDetailPanel(): void {
     this.selectedPokemon.set(null);
   }
-  
+
   /**
    * Handles image loading errors
    */
