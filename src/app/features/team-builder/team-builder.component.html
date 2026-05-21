@@ -59,7 +59,7 @@
               class="search-input"
               [disabled]="selectedPokemonIds().length >= 6" />
             
-            <!-- Dropdown Results - Fixed height with scroll -->
+            <!-- Dropdown Results -->
             @if (showDropdown() && searchResults().length > 0) {
               <div class="search-dropdown">
                 <div class="search-dropdown-scroll">
@@ -92,6 +92,46 @@
             }
           </div>
         </div>
+
+        <!-- Pokémon Sub-forms (Nickname & Held Item) -->
+        @if (selectedPokemonWithDetails().length > 0) {
+          <div class="pokemon-subforms-section">
+            <label>Pokémon Details</label>
+            <div class="pokemon-subforms">
+              @for (item of selectedPokemonWithDetails(); track item.id) {
+                <div class="pokemon-subform">
+                  <div class="subform-header">
+                    <img [src]="getPokemonSprite(item.id)" width="40" height="40" />
+                    <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+                    <button type="button" class="remove-subform" (click)="removePokemon(item.id)">✕</button>
+                  </div>
+                  <div class="subform-fields">
+                    <div class="field-group">
+                      <label>Nickname (optional)</label>
+                      <input 
+                        type="text" 
+                        [ngModel]="getPokemonNickname(item.id)"
+                        (ngModelChange)="updateNickname(item.id, $event)"
+                        placeholder="Enter a nickname"
+                        class="subform-input" />
+                    </div>
+                    <div class="field-group">
+                      <label>Held Item</label>
+                      <select 
+                        [ngModel]="getPokemonHeldItem(item.id)"
+                        (ngModelChange)="updateHeldItem(item.id, $event)"
+                        class="subform-select">
+                        @for (heldItem of heldItems; track heldItem.value) {
+                          <option [value]="heldItem.value">{{ heldItem.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         <!-- Competitive Mode Toggle -->
         <div class="checkbox-wrapper">
@@ -149,24 +189,8 @@
         <!-- Visual Separator -->
         <div class="form-separator"></div>
         
-        <!-- Selected Pokémon Chips -->
-        @if (selectedPokemonDetails().length > 0) {
-          <div class="selected-pokemon">
-            <label>Selected Pokémon:</label>
-            <div class="pokemon-chips">
-              @for (pokemon of selectedPokemonDetails(); track pokemon.id) {
-                <div class="chip">
-                  <img [src]="pokemon.sprites.front_default" width="30" height="30" />
-                  <span>{{ pokemon.name }}</span>
-                  <button class="chip-remove" (click)="removePokemon(pokemon.id)">✕</button>
-                </div>
-              }
-            </div>
-          </div>
-        }
-        
         <!-- Type Coverage Analysis -->
-        @if (selectedPokemonIds().length > 0) {
+        @if (selectedPokemonDetails().length > 0) {
           <div class="coverage-card" [class.warning]="!typeCoverage().isBalanced">
             <strong>Type Coverage:</strong> {{ typeCoverage().types.join(', ') || 'None' }}
             <span class="coverage-status">
@@ -176,7 +200,7 @@
         }
         
         <!-- Type Distribution Chart -->
-        @if (selectedPokemonIds().length > 0) {
+        @if (selectedPokemonDetails().length > 0) {
           <div class="chart-section">
             <h4>Type Distribution</h4>
             <app-type-distribution-chart [types]="typeDistribution()" />

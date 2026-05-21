@@ -12,6 +12,30 @@ import { TypeDistributionChartComponent, TypeData } from '../../shared/component
 import { TYPE_COLORS } from '../../shared/components/type-colors';
 import { Subscription } from 'rxjs';
 
+// Available held items for dropdown
+const HELD_ITEMS = [
+  { value: '', label: 'None' },
+  { value: 'leftovers', label: 'Leftovers' },
+  { value: 'choice_scarf', label: 'Choice Scarf' },
+  { value: 'choice_band', label: 'Choice Band' },
+  { value: 'choice_specs', label: 'Choice Specs' },
+  { value: 'life_orb', label: 'Life Orb' },
+  { value: 'focus_sash', label: 'Focus Sash' },
+  { value: 'assault_vest', label: 'Assault Vest' },
+  { value: 'eviolite', label: 'Eviolite' },
+  { value: 'black_sludge', label: 'Black Sludge' },
+  { value: 'toxic_orb', label: 'Toxic Orb' },
+  { value: 'flame_orb', label: 'Flame Orb' },
+  { value: 'weakness_policy', label: 'Weakness Policy' },
+  { value: 'expert_belt', label: 'Expert Belt' },
+  { value: 'muscle_band', label: 'Muscle Band' },
+  { value: 'wise_glasses', label: 'Wise Glasses' },
+  { value: 'rocky_helmet', label: 'Rocky Helmet' },
+  { value: 'red_card', label: 'Red Card' },
+  { value: 'air_balloon', label: 'Air Balloon' },
+  { value: 'light_clay', label: 'Light Clay' }
+];
+
 @Component({
   selector: 'app-team-builder',
   standalone: true,
@@ -32,6 +56,8 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   // Form state signals
   teamName = signal('');
   selectedPokemonIds = signal<number[]>([]);
+  selectedPokemonNicknames = signal<Map<number, string>>(new Map());
+  selectedPokemonHeldItems = signal<Map<number, string>>(new Map());
   competitiveMode = signal(false);
   selectedTier = signal<'OU' | 'UU' | 'RU' | 'NU' | null>('OU');
 
@@ -60,6 +86,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   // Data signals from stores
   teams = signal<Team[]>([]);
   allPokemon = signal<Pokemon[]>([]);
+
+  // Held items list for dropdown
+  heldItems = HELD_ITEMS;
 
   /**
    * Host listener to close dropdown when clicking outside
@@ -93,6 +122,46 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   getPokemonSprite(id: number): string {
     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+  }
+
+  /**
+   * Gets nickname for a Pokémon
+   */
+  getPokemonNickname(pokemonId: number): string {
+    return this.selectedPokemonNicknames().get(pokemonId) || '';
+  }
+
+  /**
+   * Gets held item for a Pokémon
+   */
+  getPokemonHeldItem(pokemonId: number): string {
+    return this.selectedPokemonHeldItems().get(pokemonId) || '';
+  }
+
+  /**
+   * Updates nickname for a Pokémon
+   */
+  updateNickname(pokemonId: number, nickname: string): void {
+    const newMap = new Map(this.selectedPokemonNicknames());
+    if (nickname) {
+      newMap.set(pokemonId, nickname);
+    } else {
+      newMap.delete(pokemonId);
+    }
+    this.selectedPokemonNicknames.set(newMap);
+  }
+
+  /**
+   * Updates held item for a Pokémon
+   */
+  updateHeldItem(pokemonId: number, heldItem: string): void {
+    const newMap = new Map(this.selectedPokemonHeldItems());
+    if (heldItem) {
+      newMap.set(pokemonId, heldItem);
+    } else {
+      newMap.delete(pokemonId);
+    }
+    this.selectedPokemonHeldItems.set(newMap);
   }
 
   /**
@@ -153,6 +222,22 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   });
 
   /**
+   * Computed signal for selected Pokémon with nicknames and held items
+   */
+  selectedPokemonWithDetails = computed(() => {
+    const ids = this.selectedPokemonIds();
+    return ids.map(id => {
+      const pokemon = this.allPokemon().find(p => p.id === id);
+      return {
+        id: id,
+        pokemon: pokemon,
+        nickname: this.selectedPokemonNicknames().get(id) || '',
+        heldItem: this.selectedPokemonHeldItems().get(id) || ''
+      };
+    }).filter(item => item.pokemon);
+  });
+
+  /**
    * Computed signal for team name validation
    */
   isTeamNameValid = computed(() => {
@@ -179,7 +264,8 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   typeCoverage = computed(() => {
     const pokemons = this.selectedPokemonDetails();
     const types = new Set<string>();
-    pokemons.forEach(p => p.types.forEach((t: string) => types.add(t)));
+    pokemons.forEach(p => p?.types.forEach((t: string) => types.add(t)));
+
     return {
       count: types.size,
       types: Array.from(types),
@@ -194,13 +280,18 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   typeDistribution = computed<TypeData[]>(() => {
     const pokemons = this.selectedPokemonDetails();
     if (pokemons.length === 0) return [];
+
     const typeCount = new Map<string, number>();
+
     pokemons.forEach(pokemon => {
-      pokemon.types.forEach((type: string) => {
-        const normalizedType = type.toLowerCase();
-        typeCount.set(normalizedType, (typeCount.get(normalizedType) || 0) + 1);
-      });
+      if (pokemon) {
+        pokemon.types.forEach((type: string) => {
+          const normalizedType = type.toLowerCase();
+          typeCount.set(normalizedType, (typeCount.get(normalizedType) || 0) + 1);
+        });
+      }
     });
+
     return Array.from(typeCount.entries())
       .map(([type, count]) => ({
         type: type.charAt(0).toUpperCase() + type.slice(1),
@@ -263,6 +354,12 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   removePokemon(pokemonId: number): void {
     this.selectedPokemonIds.update(ids => ids.filter(id => id !== pokemonId));
+    const newNicknames = new Map(this.selectedPokemonNicknames());
+    newNicknames.delete(pokemonId);
+    this.selectedPokemonNicknames.set(newNicknames);
+    const newHeldItems = new Map(this.selectedPokemonHeldItems());
+    newHeldItems.delete(pokemonId);
+    this.selectedPokemonHeldItems.set(newHeldItems);
   }
 
   /**
@@ -286,6 +383,7 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    */
   createTeam(): void {
     if (!this.canSubmit()) return;
+
     this.submitting.set(true);
     this.error.set(null);
 
@@ -299,10 +397,15 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
       next: () => {
         this.submitting.set(false);
         this.showSuccess.set(true);
+
+        // Reset form
         this.teamName.set('');
         this.selectedPokemonIds.set([]);
+        this.selectedPokemonNicknames.set(new Map());
+        this.selectedPokemonHeldItems.set(new Map());
         this.competitiveMode.set(false);
         this.selectedTier.set('OU');
+
         setTimeout(() => this.showSuccess.set(false), 3000);
       },
       error: (err: any) => {
@@ -325,10 +428,8 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
    * Updates team
    */
   updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId' | 'pokemonIds'>>): void {
-    console.log('Updating team:', id, updates);
     this.trainerStore.updateTeam(id, updates).subscribe({
       next: () => {
-        console.log('Team updated successfully');
         this.showEditDialog.set(false);
         this.editingTeam.set(null);
       },
@@ -365,11 +466,9 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
 
     this.trainerStore.deleteTeam(team.id).subscribe({
       next: () => {
-        console.log('Team deleted successfully');
         this.closeDeleteConfirmModal();
       },
       error: (err: any) => {
-        console.error('Delete failed:', err);
         this.closeDeleteConfirmModal();
         this.error.set(err.message || 'Failed to delete team');
         setTimeout(() => this.error.set(null), 3000);
