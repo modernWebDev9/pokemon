@@ -6,7 +6,7 @@
     <p>Real-time battle updates (polling every 5 seconds)</p>
   </div>
   
-  <!-- Single Stats Card - All stats in one container -->
+  <!-- Single Stats Card -->
   <div class="stats-single-card">
     <div class="stats-grid-four">
       <div class="stat-item">
@@ -28,7 +28,7 @@
     </div>
   </div>
   
-  <!-- Team Performance Section - Clickable Teams -->
+  <!-- Team Performance Section -->
   <div class="team-performance-section">
     <div class="section-header">
       <h3>🏆 Team Performance</h3>
@@ -69,7 +69,7 @@
     <app-battle-chart [battles]="monthlyBattleData()" />
   </div>
   
-  <!-- Battle History Table with Pagination in Header -->
+  <!-- Battle History Table -->
   <div class="battle-history-section">
     <div class="table-header-with-pagination">
       <h3>📋 Battle History</h3>
@@ -83,22 +83,14 @@
           </select>
         </div>
         <div class="pagination-buttons">
-          <button 
-            class="page-btn" 
-            [class.disabled]="currentPage() === 1"
-            [disabled]="currentPage() === 1"
-            (click)="goToPage(currentPage() - 1)">
+          <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
             Prev
           </button>
           <span class="page-info">{{ currentPage() }} / {{ totalPages() }}</span>
-          <button 
-            class="page-btn" 
-            [class.disabled]="currentPage() === totalPages()"
-            [disabled]="currentPage() === totalPages()"
-            (click)="goToPage(currentPage() + 1)">
+          <button class="page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
             Next
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"></polyline>
@@ -153,7 +145,7 @@
             </tr>
           }
         </tbody>
-       </table>
+      </table>
     </div>
     
     <div class="table-footer-info">
@@ -174,10 +166,7 @@
     <div class="controls-bar">
       <div class="severity-filters">
         @for (option of severityOptions; track option.value) {
-          <button 
-            class="filter-btn"
-            [class.active]="selectedSeverity() === option.value"
-            (click)="setSeverityFilter(option.value)">
+          <button class="filter-btn" [class.active]="selectedSeverity() === option.value" (click)="setSeverityFilter(option.value)">
             <span>{{ option.icon }}</span>
             {{ option.label }}
           </button>
@@ -185,15 +174,11 @@
       </div>
       
       <div class="action-buttons">
-        <button class="action-btn" (click)="refreshLogs()" [disabled]="loading()">
-          🔄 Refresh
-        </button>
+        <button class="action-btn" (click)="refreshLogs()" [disabled]="loading()">🔄 Refresh</button>
         <button class="action-btn" (click)="toggleAutoScroll()" [class.active]="autoScroll()">
           {{ autoScroll() ? '📌 Auto-scroll On' : '📌 Auto-scroll Off' }}
         </button>
-        <button class="action-btn clear" (click)="clearLogs()">
-          🗑️ Clear
-        </button>
+        <button class="action-btn clear" (click)="clearLogs()">🗑️ Clear</button>
       </div>
     </div>
     
@@ -283,7 +268,7 @@
   </div>
 }
 
-<!-- Team Pokémon Modal -->
+<!-- Team Pokémon Modal with Detailed Information -->
 @if (showTeamPokemonModal() && selectedTeam()) {
   <div class="team-pokemon-modal-overlay" (click)="closeTeamPokemonModal()">
     <div class="team-pokemon-modal" (click)="$event.stopPropagation()">
@@ -297,13 +282,21 @@
       
       <div class="team-pokemon-modal-content">
         <div class="pokemon-count-badge">
-          {{ getTeamPokemonDetails(selectedTeam()!).length }} Pokémon
+          {{ selectedTeam()!.pokemonDetailsList.length }} Pokémon
         </div>
         <div class="pokemon-grid">
-          @for (pokemon of getTeamPokemonDetails(selectedTeam()!); track pokemon.id) {
+          @for (item of selectedTeam()!.pokemonDetailsList; track item.pokemon.id) {
             <div class="pokemon-card">
-              <img [src]="getPokemonSprite(pokemon.id)" [alt]="pokemon.name" class="pokemon-image">
-              <span class="pokemon-name">{{ pokemon.name }}</span>
+              <img [src]="getPokemonSprite(item.pokemon.id)" [alt]="item.pokemon.name" class="pokemon-image">
+              <div class="pokemon-info-container">
+                <span class="pokemon-name">{{ item.pokemon.name }}</span>
+                @if (item.nickname) {
+                  <span class="pokemon-nickname-badge">✨ "{{ item.nickname }}"</span>
+                }
+                @if (item.heldItem) {
+                  <span class="pokemon-helditem-badge">🎒 {{ getHeldItemLabel(item.heldItem) }}</span>
+                }
+              </div>
             </div>
           } @empty {
             <div class="no-pokemon">
