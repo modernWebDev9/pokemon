@@ -1,10 +1,25 @@
 /* ============================================
+   CSS Variables
+   ============================================ */
+:host {
+  --profile-max-width: 1200px;
+  --card-padding: 32px;
+  --avatar-size: 120px;
+  --avatar-size-mobile: 100px;
+  --border-radius-card: 28px;
+  --border-radius-input: 60px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --gap: 28px;
+}
+
+/* ============================================
    Profile Container
    ============================================ */
 .profile-container {
-  max-width: 900px;
+  max-width: var(--profile-max-width);
   margin: 0 auto;
   animation: fadeInUp 0.5s ease-out;
+  padding: 0 20px;
 }
 
 /* ============================================
@@ -39,32 +54,56 @@
   margin-bottom: 20px;
   text-align: center;
   animation: fadeInUp 0.3s ease-out;
+  font-size: 0.85rem;
   
   &.success {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
     color: #10b981;
   }
   
   &.error {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
     color: #ef4444;
   }
 }
 
 /* ============================================
-   Profile Card
+   Split Layout (Left + Right)
+   ============================================ */
+.split-layout {
+  display: flex;
+  gap: var(--gap);
+  margin-bottom: 28px;
+  align-items: stretch;
+}
+
+/* Left Column: Profile Card */
+.left-column {
+  flex: 1.2;
+  min-width: 0;
+}
+
+/* Right Column: Stats Card */
+.right-column {
+  flex: 0.8;
+  min-width: 0;
+}
+
+/* ============================================
+   Profile Card (Left Column)
    ============================================ */
 .profile-card {
   background: var(--bg-card, #1a1a1a);
-  border-radius: 32px;
-  padding: 36px;
-  margin-bottom: 28px;
-  text-align: center;
+  border-radius: var(--border-radius-card);
+  padding: var(--card-padding);
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   box-shadow: var(--shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
-  transition: all 0.3s ease;
+  transition: var(--transition);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   
   &:hover {
     transform: translateY(-4px);
@@ -76,7 +115,7 @@
    Avatar Section
    ============================================ */
 .avatar-section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   display: flex;
   justify-content: center;
 }
@@ -87,14 +126,14 @@
 }
 
 .avatar-placeholder {
-  width: 140px;
-  height: 140px;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
   background: linear-gradient(135deg, #667eea, #764ba2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: var(--transition);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
   position: relative;
   overflow: hidden;
@@ -106,7 +145,7 @@
   }
   
   .avatar-initial {
-    font-size: 4rem;
+    font-size: 3.2rem;
     font-weight: 800;
     color: white;
     text-align: center;
@@ -121,7 +160,6 @@
     text-transform: uppercase;
   }
   
-  // Only clickable in edit mode
   &.editable {
     cursor: pointer;
     
@@ -149,6 +187,7 @@
   color: white;
   font-size: 0.7rem;
   z-index: 15;
+  backdrop-filter: blur(4px);
   
   .progress-spinner {
     width: 30px;
@@ -167,26 +206,27 @@
 /* Upload Actions */
 .upload-actions {
   position: absolute;
-  bottom: -45px;
+  bottom: -48px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   background: var(--bg-card, #1a1a1a);
   padding: 6px 12px;
-  border-radius: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
   z-index: 20;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
   
   button {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border: none;
-    border-radius: 20px;
+    border-radius: 30px;
     font-size: 0.7rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
   }
 }
 
@@ -196,57 +236,37 @@
   
   &:hover {
     background: #059669;
+    transform: translateY(-1px);
   }
 }
 
 .upload-cancel {
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(239, 68, 68, 0.85);
   color: white;
   
   &:hover {
     background: #ef4444;
-  }
-}
-
-.remove-avatar {
-  position: absolute;
-  bottom: -45px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(239, 68, 68, 0.8);
-  color: white;
-  border: none;
-  padding: 4px 12px;
-  border-radius: 30px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-  z-index: 20;
-  
-  &:hover {
-    background: #ef4444;
-    transform: translateX(-50%) translateY(-2px);
+    transform: translateY(-1px);
   }
 }
 
 /* ============================================
-   Profile Info
+   Profile Info (View Mode)
    ============================================ */
 .profile-info {
   text-align: left;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   background: var(--bg-secondary, #0f0f0f);
-  border-radius: 24px;
-  padding: 8px;
+  border-radius: 20px;
+  padding: 4px;
+  flex: 1;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.06));
   
   &:last-child {
@@ -255,7 +275,7 @@
   
   .info-label {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-secondary, #a0a0a0);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -263,27 +283,30 @@
   
   .info-value {
     font-weight: 600;
+    font-size: 0.9rem;
     color: var(--text-primary, white);
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }
 
 .badges {
   display: inline-flex;
   gap: 4px;
-  margin-right: 8px;
+  margin-right: 4px;
   
   .badge-icon {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 }
 
 .rank-value {
-  padding: 4px 14px;
+  padding: 4px 12px;
   border-radius: 40px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   
   &.rank-trainer { background: linear-gradient(135deg, #64748b, #475569); color: white; }
@@ -294,20 +317,19 @@
   &.rank-legend { background: linear-gradient(135deg, #00f5ff, #b300ff); color: white; }
 }
 
-/* ============================================
-   Edit Button
-   ============================================ */
+/* Edit Button (View Mode) */
 .edit-btn {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
   border-radius: 60px;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
   color: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
+  margin-top: auto;
   
   &:hover {
     transform: translateY(-2px);
@@ -316,11 +338,13 @@
 }
 
 /* ============================================
-   Edit Form
+   Edit Form (Edit Mode)
    ============================================ */
 .edit-form {
   text-align: left;
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .form-group {
@@ -330,7 +354,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-secondary, #a0a0a0);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -339,13 +363,13 @@
 
 .form-input {
   width: 100%;
-  padding: 14px 18px;
+  padding: 12px 16px;
   background: var(--bg-secondary, #0f0f0f);
   border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
   border-radius: 60px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-primary, white);
-  transition: all 0.2s;
+  transition: var(--transition);
   
   &:focus {
     outline: none;
@@ -359,8 +383,8 @@ select.form-input {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 18px center;
-  padding-right: 45px;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
 select.form-input option {
@@ -369,16 +393,15 @@ select.form-input option {
 }
 
 .avatar-info {
-  margin-top: 12px;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: rgba(0, 245, 255, 0.1);
-  border-radius: 12px;
+  margin: 12px 0 20px 0;
+  padding: 10px 14px;
+  background: rgba(0, 245, 255, 0.08);
+  border-radius: 14px;
   border-left: 3px solid #00f5ff;
   
   small {
     color: var(--text-secondary, #a0a0a0);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     line-height: 1.5;
     display: block;
   }
@@ -386,17 +409,17 @@ select.form-input option {
 
 .edit-actions {
   display: flex;
-  gap: 15px;
-  margin-top: 28px;
+  gap: 12px;
+  margin-top: auto;
   
   button {
     flex: 1;
-    padding: 14px;
+    padding: 12px;
     border-radius: 60px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
   }
 }
 
@@ -433,23 +456,27 @@ select.form-input option {
 }
 
 /* ============================================
-   Stats Card
+   Stats Card (Right Column)
    ============================================ */
 .stats-card {
   background: var(--bg-card, #1a1a1a);
-  border-radius: 28px;
-  padding: 28px;
+  border-radius: var(--border-radius-card);
+  padding: var(--card-padding);
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
-  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.15));
-  transition: all 0.3s ease;
+  box-shadow: var(--shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
+  transition: var(--transition);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    border-color: rgba(0, 245, 255, 0.2);
   }
   
   h3 {
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 24px;
     color: var(--text-primary, white);
@@ -457,29 +484,33 @@ select.form-input option {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     
     &::before {
       content: "🏆";
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
   }
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
 }
 
 .stat-item {
   text-align: center;
-  padding: 20px;
+  padding: 16px;
   background: var(--bg-secondary, #0f0f0f);
   border-radius: 20px;
-  transition: all 0.2s;
+  transition: var(--transition);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   
   &:hover {
-    transform: translateY(-3px);
+    transform: translateX(4px);
     background: rgba(0, 245, 255, 0.05);
   }
   
@@ -496,7 +527,7 @@ select.form-input option {
     letter-spacing: 1px;
     font-weight: 600;
     color: var(--text-secondary, #a0a0a0);
-    margin-top: 8px;
+    margin-top: 6px;
   }
   
   &.win .stat-value { color: #10b981; }
@@ -521,20 +552,56 @@ select.form-input option {
 /* ============================================
    Responsive Design
    ============================================ */
+@media (max-width: 900px) {
+  .split-layout {
+    flex-direction: column;
+  }
+  
+  .left-column, .right-column {
+    width: 100%;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .stats-card h3 {
+    margin-bottom: 20px;
+  }
+  
+  .stat-item {
+    padding: 14px;
+    
+    .stat-value {
+      font-size: 1.5rem;
+    }
+  }
+}
+
 @media (max-width: 768px) {
+  .profile-container {
+    padding: 0 16px;
+  }
+  
   .profile-card, .stats-card {
     padding: 24px;
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
   }
   
   .info-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    
+    .info-value {
+      justify-content: flex-start;
+    }
   }
   
   .edit-actions {
@@ -546,21 +613,53 @@ select.form-input option {
   }
   
   .avatar-placeholder {
-    width: 100px;
-    height: 100px;
+    width: var(--avatar-size-mobile);
+    height: var(--avatar-size-mobile);
     
     .avatar-initial {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
     }
   }
   
-  .upload-actions, .remove-avatar {
-    bottom: -40px;
+  .upload-actions {
+    bottom: -42px;
     
     button {
-      padding: 3px 10px;
+      padding: 4px 12px;
       font-size: 0.65rem;
     }
+  }
+  
+  .stat-item .stat-value {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .profile-card, .stats-card {
+    padding: 20px;
+  }
+  
+  .stat-item {
+    padding: 12px;
+    
+    .stat-value {
+      font-size: 1.2rem;
+    }
+  }
+  
+  .form-input {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+  }
+  
+  .edit-actions button {
+    padding: 10px;
+    font-size: 0.8rem;
   }
 }
 
@@ -569,16 +668,8 @@ select.form-input option {
     grid-template-columns: 1fr;
   }
   
-  .profile-card, .stats-card {
-    padding: 20px;
-  }
-  
-  .stat-item {
-    padding: 16px;
-    
-    .stat-value {
-      font-size: 1.5rem;
-    }
+  .badges {
+    flex-wrap: wrap;
   }
 }
 
@@ -587,7 +678,7 @@ select.form-input option {
    ============================================ */
 [data-theme="light"] {
   .profile-card, .stats-card {
-    background: white;
+    background: #ffffff;
   }
   
   .profile-info {
@@ -595,7 +686,7 @@ select.form-input option {
   }
   
   .info-row {
-    border-bottom-color: #e0e0e0;
+    border-bottom-color: #e8e8e8;
     
     .info-value {
       color: #1a1a1a;
@@ -603,8 +694,9 @@ select.form-input option {
   }
   
   .form-input {
-    background: #f5f5f5;
+    background: #f8f9fa;
     color: #1a1a1a;
+    border-color: #e0e0e0;
     
     option {
       background: white;
@@ -635,7 +727,7 @@ select.form-input option {
   
   .rank-value {
     &.rank-trainer { background: #e2e8f0; color: #475569; }
-    &.rank-gym { background: #dbeafe; color: #2563ed; }
+    &.rank-gym { background: #dbeafe; color: #2563eb; }
     &.rank-elite { background: #ede9fe; color: #7c3aed; }
     &.rank-champion { background: #fef3c7; color: #d97706; }
     &.rank-master { background: #fee2e2; color: #dc2626; }
@@ -653,5 +745,9 @@ select.form-input option {
   
   .avatar-info {
     background: rgba(0, 245, 255, 0.05);
+  }
+  
+  .stats-card h3 {
+    border-bottom-color: #e8e8e8;
   }
 }
