@@ -15,7 +15,7 @@
    Loading Overlay - Centered & Compact
    ============================================ */
 .loading-overlay {
-   position: absolute;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -55,15 +55,20 @@
 }
 
 .loading-content p {
-   margin: 0;
+  margin: 0;
   color: var(--text-secondary, #a0a0a0);
   font-size: 0.85rem;
   font-weight: 500;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================
@@ -74,7 +79,7 @@
   top: 70px;
   z-index: 99;
   margin-bottom: 5px;
-  
+
   @media (max-width: 768px) {
     top: 10px;
   }
@@ -101,11 +106,11 @@
   height: 52px;
   background: transparent;
   border-right: 1px solid var(--border-light, rgba(255, 255, 255, 0.06));
-  
+
   &:last-child {
     border-right: none;
   }
-  
+
   .filter-icon {
     font-size: 1.1rem;
     opacity: 0.7;
@@ -125,11 +130,11 @@
   height: 100%;
   font-size: 0.9rem;
   color: var(--text-primary, white);
-  
+
   &::placeholder {
     color: var(--text-tertiary, #6b6b6b);
   }
-  
+
   &:focus {
     outline: none;
   }
@@ -142,20 +147,20 @@
   height: 100%;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-primary, white);
+  color: white;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
-  
+
   &:focus {
     outline: none;
   }
-  
+
   option {
     background: var(--bg-secondary, #1a1a1a);
-    color: var(--text-primary, white);
+    color: white;
   }
 }
 
@@ -163,7 +168,7 @@
 .bulk-actions-compact {
   gap: 8px;
   padding: 0 12px;
-  
+
   .bulk-count-badge {
     font-size: 0.75rem;
     font-weight: 600;
@@ -173,7 +178,7 @@
     border-radius: 30px;
     white-space: nowrap;
   }
-  
+
   .compact-add-btn {
     padding: 5px 12px;
     background: linear-gradient(135deg, #10b981, #059669);
@@ -184,18 +189,18 @@
     color: white;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
   }
-  
+
   .compact-clear-btn {
     padding: 5px 10px;
     background: rgba(239, 68, 68, 0.15);
@@ -206,7 +211,7 @@
     color: #ef4444;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background: rgba(239, 68, 68, 0.25);
       transform: translateY(-1px);
@@ -217,14 +222,14 @@
 /* Range Item */
 .range-item {
   min-width: 260px;
-  
+
   .range-controls {
     display: flex;
     align-items: center;
     gap: 12px;
     flex: 1;
   }
-  
+
   .range-value {
     font-size: 0.75rem;
     font-weight: 600;
@@ -235,14 +240,14 @@
     min-width: 40px;
     text-align: center;
   }
-  
+
   .range-input {
     flex: 1;
     -webkit-appearance: none;
     height: 4px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
-    
+
     &::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 14px;
@@ -252,18 +257,18 @@
       cursor: pointer;
       box-shadow: 0 0 6px #00f5ff;
       transition: transform 0.15s;
-      
+
       &:hover {
         transform: scale(1.2);
       }
     }
-    
+
     &::-moz-range-track {
       background: rgba(255, 255, 255, 0.2);
       height: 4px;
       border-radius: 4px;
     }
-    
+
     &::-moz-range-thumb {
       width: 14px;
       height: 14px;
@@ -274,7 +279,7 @@
       border: none;
     }
   }
-  
+
   .range-label {
     font-size: 0.7rem;
     color: var(--text-tertiary, #6b6b6b);
@@ -324,17 +329,17 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  
+
   &:hover {
     border-color: #00f5ff;
     background: rgba(0, 245, 255, 0.1);
   }
 }
 
-.pokemon-checkbox:checked + .checkbox-label {
+.pokemon-checkbox:checked+.checkbox-label {
   background: linear-gradient(135deg, #00f5ff, #b300ff);
   border-color: transparent;
-  
+
   &::after {
     content: '✓';
     position: absolute;
@@ -347,7 +352,7 @@
   }
 }
 
-.pokemon-checkbox:disabled + .checkbox-label {
+.pokemon-checkbox:disabled+.checkbox-label {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -377,15 +382,16 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
-  
-  th, td {
+
+  th,
+  td {
     text-align: center !important;
     vertical-align: middle !important;
   }
-  
+
   thead {
     background: linear-gradient(135deg, #0f0c29, #1a1a2e);
-    
+
     th {
       padding: 16px 12px;
       font-weight: 700;
@@ -396,31 +402,31 @@
       border-bottom: 2px solid #00f5ff;
       cursor: pointer;
       transition: all 0.2s;
-      
+
       &:hover {
         color: white;
         background: rgba(0, 245, 255, 0.1);
       }
-      
+
       span {
         margin-left: 6px;
         font-size: 0.7rem;
       }
     }
   }
-  
+
   tbody {
     tr {
       transition: all 0.2s;
       cursor: pointer;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      
+
       &:hover {
         background: rgba(0, 245, 255, 0.05);
         transform: scale(1.01);
       }
     }
-    
+
     td {
       padding: 14px 12px;
       color: var(--text-primary, white);
@@ -450,7 +456,7 @@
   height: 52px;
   transition: all 0.2s;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
-  
+
   .pokemon-row:hover & {
     transform: scale(1.15) rotate(5deg);
     filter: drop-shadow(0 4px 12px rgba(0, 245, 255, 0.4));
@@ -478,7 +484,7 @@
   color: white;
   transition: all 0.2s;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  
+
   &:hover {
     transform: translateY(-2px) scale(1.05);
   }
@@ -545,12 +551,12 @@
   color: white;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
   }
-  
+
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -580,24 +586,80 @@
 /* ============================================
    Type Colors
    ============================================ */
-.type-normal { background: linear-gradient(135deg, #9099a1, #6b7280); }
-.type-fire { background: linear-gradient(135deg, #ff9c54, #f97316); }
-.type-water { background: linear-gradient(135deg, #4d90ff, #3b82f6); }
-.type-electric { background: linear-gradient(135deg, #f4d23c, #eab308); color: #1a1a1a; }
-.type-grass { background: linear-gradient(135deg, #63bc5a, #22c55e); }
-.type-ice { background: linear-gradient(135deg, #73cec0, #14b8a6); color: #1a1a1a; }
-.type-fighting { background: linear-gradient(135deg, #ce416b, #ef4444); }
-.type-poison { background: linear-gradient(135deg, #aa6bc8, #a855f7); }
-.type-ground { background: linear-gradient(135deg, #d97845, #ea580c); }
-.type-flying { background: linear-gradient(135deg, #93a2e0, #8b5cf6); }
-.type-psychic { background: linear-gradient(135deg, #ff6b76, #f43f5e); }
-.type-bug { background: linear-gradient(135deg, #91c12f, #84cc16); }
-.type-rock { background: linear-gradient(135deg, #c5b059, #eab308); }
-.type-ghost { background: linear-gradient(135deg, #5269ad, #6366f1); }
-.type-dragon { background: linear-gradient(135deg, #0b6dc3, #3b82f6); }
-.type-dark { background: linear-gradient(135deg, #5a5366, #6b7280); }
-.type-steel { background: linear-gradient(135deg, #5a8ea2, #64748b); }
-.type-fairy { background: linear-gradient(135deg, #ec8fe6, #d946ef); color: #1a1a1a; }
+.type-normal {
+  background: linear-gradient(135deg, #9099a1, #6b7280);
+}
+
+.type-fire {
+  background: linear-gradient(135deg, #ff9c54, #f97316);
+}
+
+.type-water {
+  background: linear-gradient(135deg, #4d90ff, #3b82f6);
+}
+
+.type-electric {
+  background: linear-gradient(135deg, #f4d23c, #eab308);
+  color: #1a1a1a;
+}
+
+.type-grass {
+  background: linear-gradient(135deg, #63bc5a, #22c55e);
+}
+
+.type-ice {
+  background: linear-gradient(135deg, #73cec0, #14b8a6);
+  color: #1a1a1a;
+}
+
+.type-fighting {
+  background: linear-gradient(135deg, #ce416b, #ef4444);
+}
+
+.type-poison {
+  background: linear-gradient(135deg, #aa6bc8, #a855f7);
+}
+
+.type-ground {
+  background: linear-gradient(135deg, #d97845, #ea580c);
+}
+
+.type-flying {
+  background: linear-gradient(135deg, #93a2e0, #8b5cf6);
+}
+
+.type-psychic {
+  background: linear-gradient(135deg, #ff6b76, #f43f5e);
+}
+
+.type-bug {
+  background: linear-gradient(135deg, #91c12f, #84cc16);
+}
+
+.type-rock {
+  background: linear-gradient(135deg, #c5b059, #eab308);
+}
+
+.type-ghost {
+  background: linear-gradient(135deg, #5269ad, #6366f1);
+}
+
+.type-dragon {
+  background: linear-gradient(135deg, #0b6dc3, #3b82f6);
+}
+
+.type-dark {
+  background: linear-gradient(135deg, #5a5366, #6b7280);
+}
+
+.type-steel {
+  background: linear-gradient(135deg, #5a8ea2, #64748b);
+}
+
+.type-fairy {
+  background: linear-gradient(135deg, #ec8fe6, #d946ef);
+  color: #1a1a1a;
+}
 
 /* ============================================
    Add to Team Modal
@@ -634,14 +696,14 @@
   align-items: center;
   padding: 20px 24px;
   background: linear-gradient(135deg, #667eea, #764ba2);
-  
+
   h3 {
     margin: 0;
     font-size: 1.2rem;
     font-weight: 700;
     color: white;
   }
-  
+
   .modal-close {
     width: 32px;
     height: 32px;
@@ -652,7 +714,7 @@
     font-size: 18px;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background: rgba(239, 68, 68, 0.8);
       transform: scale(1.05);
@@ -662,34 +724,34 @@
 
 .modal-content {
   padding: 24px;
-  
+
   .selected-info {
     display: flex;
     align-items: baseline;
     gap: 8px;
     justify-content: center;
     margin-bottom: 20px;
-    
+
     .selected-count {
       font-size: 1.5rem;
       font-weight: 800;
       color: #00f5ff;
     }
-    
+
     .selected-text {
       font-size: 0.9rem;
       color: var(--text-secondary, #a0a0a0);
     }
-    
+
     .warning-text {
       font-size: 0.7rem;
       color: #f59e0b;
     }
   }
-  
+
   .form-group {
     margin-bottom: 20px;
-    
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -699,7 +761,7 @@
       text-transform: uppercase;
     }
   }
-  
+
   .form-select {
     width: 100%;
     padding: 12px 16px;
@@ -709,18 +771,18 @@
     font-size: 0.9rem;
     color: var(--text-primary, white);
     cursor: pointer;
-    
+
     &:focus {
       outline: none;
       border-color: #00f5ff;
     }
-    
+
     option {
       background: var(--bg-secondary, #1a1a1a);
       color: var(--text-primary, white);
     }
   }
-  
+
   .error-message {
     padding: 10px 14px;
     background: rgba(239, 68, 68, 0.15);
@@ -730,7 +792,7 @@
     font-size: 0.8rem;
     margin-bottom: 16px;
   }
-  
+
   .success-message {
     padding: 10px 14px;
     background: rgba(16, 185, 129, 0.15);
@@ -740,7 +802,7 @@
     font-size: 0.8rem;
     margin-bottom: 16px;
   }
-  
+
   .warning-note {
     padding: 10px 14px;
     background: rgba(245, 158, 11, 0.1);
@@ -748,7 +810,7 @@
     border-radius: 8px;
     font-size: 0.7rem;
     color: var(--text-secondary, #a0a0a0);
-    
+
     span {
       font-weight: 700;
       color: #f59e0b;
@@ -762,7 +824,7 @@
   padding: 20px 24px;
   border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   background: var(--bg-secondary, #0f0f0f);
-  
+
   .cancel-btn {
     flex: 1;
     padding: 10px;
@@ -774,13 +836,13 @@
     color: var(--text-secondary, #a0a0a0);
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background: rgba(255, 255, 255, 0.05);
       transform: translateY(-2px);
     }
   }
-  
+
   .confirm-btn {
     flex: 1;
     padding: 10px;
@@ -792,12 +854,12 @@
     color: white;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -806,8 +868,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -815,6 +882,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -828,7 +896,7 @@
   .sticky-filters-wrapper {
     top: 10px;
   }
-  
+
   .filters-bar {
     flex-direction: column;
     border-radius: 24px;
@@ -840,7 +908,7 @@
     backdrop-filter: none;
     background: transparent;
   }
-  
+
   .filter-item {
     border-right: none;
     border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
@@ -848,47 +916,48 @@
     border-radius: 50px;
     margin-bottom: 8px;
     padding: 0 18px;
-    
+
     &:last-child {
       margin-bottom: 0;
     }
   }
-  
+
   .bulk-actions-compact {
     justify-content: center;
   }
-  
+
   .range-item {
     justify-content: space-between;
     flex-wrap: wrap;
-    
+
     .range-controls {
       flex: 2;
     }
   }
-  
+
   .pokedex-table {
     font-size: 0.75rem;
-    
-    th, td {
+
+    th,
+    td {
       padding: 10px 6px;
     }
   }
-  
+
   .pokemon-sprite {
     width: 40px;
     height: 40px;
   }
-  
+
   .type-badge {
     padding: 2px 8px;
     font-size: 0.6rem;
   }
-  
+
   .stat-cell {
     font-size: 0.7rem;
   }
-  
+
   .total-stat {
     font-size: 0.8rem;
     padding: 2px 8px;
@@ -897,256 +966,323 @@
 }
 
 /* ============================================
-   Light Theme Override
+   Light Theme Override - COMPLETELY FIXED
    ============================================ */
 [data-theme="light"] {
   .pokedex-container {
     background: #ffffff;
   }
-  
+
   .loading-content {
     background: #ffffff;
     border-color: #e0e0e0;
   }
-  
+
   .loading-content p {
     color: #666;
   }
-  
+
   .sticky-filters-wrapper .filters-bar {
     background: rgba(248, 249, 250, 0.95);
     border-color: #e0e0e0;
     backdrop-filter: blur(10px);
   }
-  
+
   .filter-item {
     border-right-color: #e0e0e0;
-    
+
     .filter-icon {
-      opacity: 0.6;
-      color: #666;
+      opacity: 0.8;
+      color: #4a4a4a;
     }
   }
-  
+
+  /* Search Input */
   .filter-input {
     color: #1a1a1a;
-    
+
     &::placeholder {
       color: #aaa;
     }
   }
-  
-  .filter-select {
-    color: #1a1a1a;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    
+
+  /* Select Dropdowns - COMPLETELY FIXED for light theme */
+  .filter-select,
+  .filter-select.ng-untouched,
+  .filter-select.ng-pristine,
+  .filter-select.ng-valid {
+    color: #1a1a1a !important;
+    background-color: #f8f9fa !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234a4a4a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    border: 1px solid #d0d0d0 !important;
+    border-radius: 30px !important;
+    padding: 0 24px 0 16px !important;
+    height: auto !important;
+    min-height: 40px !important;
+
     option {
-      background: white;
-      color: #1a1a1a;
+      background: white !important;
+      color: #1a1a1a !important;
+    }
+    
+    &:focus {
+      border-color: #667eea !important;
+      outline: none !important;
     }
   }
-  
+
+  /* Range Values - FIXED: Dark text on light background */
   .range-value {
-    background: rgba(102, 126, 234, 0.1);
-    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.15) !important;
+    color: #4f46e5 !important;
+    font-weight: 700 !important;
   }
-  
+
   .range-input {
-    background: rgba(0, 0, 0, 0.1);
-    
+    background: rgba(0, 0, 0, 0.15);
+
     &::-webkit-slider-thumb {
       background: #4f46e5;
       box-shadow: 0 0 6px #4f46e5;
     }
-    
+
     &::-moz-range-thumb {
       background: #4f46e5;
       box-shadow: 0 0 6px #4f46e5;
     }
   }
-  
+
   .range-label {
-    color: #999;
+    color: #666 !important;
+    font-weight: 500;
   }
-  
-  .checkbox-label {
-    background: #ffffff;
-    border-color: #d0d0d0;
-    
-    &:hover {
-      border-color: #667eea;
-      background: rgba(102, 126, 234, 0.05);
-    }
-  }
-  
-  .pokemon-checkbox:checked + .checkbox-label {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-color: transparent;
-  }
-  
-  .pokedex-table thead {
-    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
-    
-    th {
-      color: #4f46e5;
-      border-bottom-color: #4f46e5;
-      
-      &:hover {
-        color: white;
-        background: rgba(79, 70, 229, 0.15);
-      }
-    }
-  }
-  
-  .pokedex-table tbody {
-    tr {
-      border-bottom-color: #e0e0e0;
-      
-      &:hover {
-        background: rgba(102, 126, 234, 0.05);
-      }
-    }
-    
-    td {
-      color: #1a1a1a;
-    }
-  }
-  
-  .pokemon-id {
-    color: #888;
-  }
-  
-  .pokemon-name {
-    color: #4f46e5;
-  }
-  
-  .total-stat {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-  }
-  
-  .pagination {
-    background: #f0f0f0;
-  }
-  
-  .page-info {
-    background: #e0e0e0;
-    color: #333;
-  }
-  
-  .page-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    
-    &:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-    }
-  }
-  
+
+  /* Bulk Actions */
   .bulk-count-badge {
-    background: rgba(102, 126, 234, 0.1);
-    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.12);
+    color: #4f46e5 !important;
+    font-weight: 700;
   }
-  
+
   .compact-add-btn {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
   }
-  
+
   .compact-clear-btn {
     background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
-    color: #ef4444;
-    
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444 !important;
+    font-weight: 600;
+
     &:hover {
       background: rgba(239, 68, 68, 0.2);
     }
   }
-  
+
+  /* Checkbox Styles */
+  .checkbox-label {
+    background: #ffffff;
+    border-color: #c0c0c0;
+
+    &:hover {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.08);
+    }
+  }
+
+  .pokemon-checkbox:checked+.checkbox-label {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+  }
+
+  /* Table Header */
+  .pokedex-table thead {
+    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+
+    th {
+      color: #4f46e5 !important;
+      border-bottom-color: #4f46e5;
+      font-weight: 800;
+
+      &:hover {
+        color: #1e1b4b !important;
+        background: rgba(79, 70, 229, 0.15);
+      }
+    }
+  }
+
+  /* Table Body */
+  .pokedex-table tbody {
+    tr {
+      border-bottom-color: #e5e5e5;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.08);
+      }
+    }
+
+    td {
+      color: #1a1a1a !important;
+    }
+  }
+
+  .pokemon-id {
+    color: #666 !important;
+    font-weight: 600;
+  }
+
+  .pokemon-name {
+    color: #4f46e5 !important;
+    font-weight: 700;
+  }
+
+  .stat-cell {
+    color: #1a1a1a !important;
+    font-weight: 600;
+  }
+
+  /* Total Stats - FIXED: Now clearly visible */
+  .total-stat {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #d97706 !important;
+    font-weight: 800;
+  }
+
+  /* Pagination - FIXED: Better contrast */
+  .pagination {
+    background: #f0f0f0;
+  }
+
+  .page-info {
+    background: #e5e5e5 !important;
+    color: #1a1a1a !important;
+    font-weight: 600;
+  }
+
+  .page-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  /* Selection Indicator */
+  .selection-indicator {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white !important;
+    font-weight: 700;
+  }
+
+  /* Modal */
   .modal-container {
     background: #ffffff;
     border-color: #e0e0e0;
   }
-  
+
   .modal-header {
     background: linear-gradient(135deg, #667eea, #764ba2);
-    
+
     h3 {
       color: white;
     }
   }
-  
+
   .modal-content {
     .selected-count {
-      color: #4f46e5;
+      color: #4f46e5 !important;
     }
-    
+
     .selected-text {
-      color: #666;
+      color: #666 !important;
     }
-    
+
+    .form-group label {
+      color: #666 !important;
+      font-weight: 700;
+    }
+
     .form-select {
       background: #f8f9fa;
-      border-color: #e0e0e0;
-      color: #1a1a1a;
-      
+      border-color: #d0d0d0;
+      color: #1a1a1a !important;
+      font-weight: 500;
+
       option {
         background: white;
         color: #1a1a1a;
       }
     }
-    
+
     .error-message {
-      background: rgba(239, 68, 68, 0.08);
-      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626 !important;
+      font-weight: 500;
     }
-    
+
     .success-message {
-      background: rgba(16, 185, 129, 0.08);
-      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669 !important;
+      font-weight: 500;
     }
-    
+
     .warning-note {
-      background: rgba(245, 158, 11, 0.05);
-      color: #666;
-      
+      background: rgba(245, 158, 11, 0.08);
+      color: #666 !important;
+
       span {
-        color: #f59e0b;
+        color: #d97706 !important;
+        font-weight: 700;
       }
     }
   }
-  
+
   .modal-footer {
     background: #f8f9fa;
-    border-top-color: #e0e0e0;
+    border-top-color: #e5e5e5;
   }
-  
+
   .cancel-btn {
     border-color: #d0d0d0;
-    color: #666;
-    
+    color: #666 !important;
+    font-weight: 600;
+
     &:hover {
-      background: rgba(0, 0, 0, 0.03);
+      background: rgba(0, 0, 0, 0.05);
     }
   }
-  
+
   .confirm-btn {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
+    font-weight: 600;
   }
-  
+
+  /* Loading Overlay */
   .loading-overlay {
     background: rgba(255, 255, 255, 0.9);
   }
-  
+
   .no-data {
-    color: #999;
+    color: #999 !important;
+    font-weight: 500;
   }
-  
+
+  /* Responsive */
   @media (max-width: 900px) {
     .filter-item {
       background: white;
-      border-bottom-color: #e0e0e0;
+      border-bottom-color: #e5e5e5;
+    }
+    
+    .filter-select,
+    .filter-select.ng-untouched,
+    .filter-select.ng-pristine,
+    .filter-select.ng-valid {
+      background-color: #f8f9fa !important;
     }
   }
 }
