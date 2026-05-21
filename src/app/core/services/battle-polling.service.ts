@@ -1,7 +1,7 @@
 // src/app/core/services/battle-polling.service.ts
 import { Injectable, DestroyRef, inject } from '@angular/core';
-import { interval, Observable, Subject, from } from 'rxjs';
-import { switchMap, map, distinctUntilChanged, tap, takeUntil } from 'rxjs/operators';
+import { interval, Observable, Subject } from 'rxjs';
+import { switchMap, map, tap, takeUntil } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 export interface BattleLogEntry {
