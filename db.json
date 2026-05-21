@@ -174,27 +174,55 @@
       "name": "MyTeam",
       "trainer_id": "1",
       "pokemon_ids": [
-        1
+        1,
+        8,
+        9
       ],
       "pokemon_details": [
         {
           "pokemonId": 1,
-          "nickname": "mmm",
-          "heldItem": "life_orb",
+          "nickname": "",
+          "heldItem": "",
           "evs": {
-            "hp": 210,
-            "attack": 30,
-            "defense": 50,
-            "specialAttack": 20,
-            "specialDefense": 100,
-            "speed": 100
+            "hp": 0,
+            "attack": 0,
+            "defense": 0,
+            "specialAttack": 0,
+            "specialDefense": 0,
+            "speed": 0
+          }
+        },
+        {
+          "pokemonId": 8,
+          "nickname": "",
+          "heldItem": "",
+          "evs": {
+            "hp": 0,
+            "attack": 0,
+            "defense": 0,
+            "specialAttack": 0,
+            "specialDefense": 0,
+            "speed": 0
+          }
+        },
+        {
+          "pokemonId": 9,
+          "nickname": "",
+          "heldItem": "",
+          "evs": {
+            "hp": 0,
+            "attack": 0,
+            "defense": 0,
+            "specialAttack": 0,
+            "specialDefense": 0,
+            "speed": 0
           }
         }
       ],
-      "created_at": "2026-05-21T02:53:10.008Z",
-      "competitive_mode": true,
+      "created_at": "2026-05-21T03:04:13.260Z",
+      "competitive_mode": false,
       "tier": null,
-      "id": "Wc_bm_r-ywE"
+      "id": "HoTMrp9jpgo"
     }
   ],
   "battles": [

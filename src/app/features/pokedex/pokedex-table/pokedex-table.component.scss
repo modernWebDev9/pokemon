@@ -1,5 +1,7 @@
 // src/app/features/pokedex/pokedex-table/pokedex-table.component.scss
 
+
+
 /* ============================================
    Container
    ============================================ */
@@ -88,7 +90,7 @@
 
 .search-item {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .filter-input {
@@ -130,6 +132,61 @@
   option {
     background: var(--bg-secondary, #1a1a1a);
     color: var(--text-primary, white);
+  }
+}
+
+/* Compact Bulk Actions */
+.bulk-actions-compact {
+  gap: 8px;
+  padding: 0 12px;
+  
+  .bulk-count-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #00f5ff;
+    background: rgba(0, 245, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 30px;
+    white-space: nowrap;
+  }
+  
+  .compact-add-btn {
+    padding: 5px 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+  
+  .compact-clear-btn {
+    padding: 5px 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: rgba(239, 68, 68, 0.25);
+      transform: translateY(-1px);
+    }
   }
 }
 
@@ -203,7 +260,88 @@
 }
 
 /* ============================================
-   Table Wrapper
+   Checkbox Styles
+   ============================================ */
+.select-col {
+  width: 50px;
+  text-align: center !important;
+  padding: 16px 8px;
+}
+
+.select-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 12px 8px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pokemon-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox-label {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-tertiary, #2a2a2a);
+  border: 2px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    border-color: #00f5ff;
+    background: rgba(0, 245, 255, 0.1);
+  }
+}
+
+.pokemon-checkbox:checked + .checkbox-label {
+  background: linear-gradient(135deg, #00f5ff, #b300ff);
+  border-color: transparent;
+  
+  &::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+  }
+}
+
+.pokemon-checkbox:disabled + .checkbox-label {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Selection Indicator in Header */
+.selection-indicator {
+  display: inline-block;
+  background: linear-gradient(135deg, #00f5ff, #b300ff);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  min-width: 28px;
+}
+
+/* ============================================
+   Table Styles
    ============================================ */
 .table-wrapper {
   overflow-x: auto;
@@ -211,9 +349,6 @@
   margin-bottom: 24px;
 }
 
-/* ============================================
-   Pokédex Table - Centered Everything
-   ============================================ */
 .pokedex-table {
   width: 100%;
   border-collapse: collapse;
@@ -282,6 +417,7 @@
   font-weight: 700;
   font-size: 1rem;
   color: #00f5ff;
+  text-transform: capitalize;
 }
 
 /* Pokemon Sprite */
@@ -333,57 +469,31 @@
 
 .table_total_w {
   width: 90px;
+  text-align: center !important;
 }
 
-/* Total Stat - Center aligned */
+/* Total Stat - Centered Vertically and Horizontally */
 .total-stat {
-  margin-top: 16px;
-  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 800;
   font-size: 1rem;
   color: #ffd700;
   background: rgba(255, 215, 0, 0.15);
   border-radius: 30px;
-  display: inline-block;
   padding: 4px 14px;
-  text-align: center;
   min-width: 65px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.2;
 }
 
-/* Override any right-aligned cells */
-.pokedex-table td:first-child,
-.pokedex-table td:last-child,
-.pokedex-table td:nth-child(5),
-.pokedex-table td:nth-child(6),
-.pokedex-table td:nth-child(7),
-.pokedex-table td:nth-child(8),
-.pokedex-table td:nth-child(9),
-.pokedex-table td:nth-child(10),
-.pokedex-table td:nth-child(11) {
+/* Ensure the total stat cell is properly centered */
+.pokedex-table td:last-child {
   text-align: center !important;
+  vertical-align: middle !important;
 }
-
-/* ============================================
-   Type Colors
-   ============================================ */
-.type-normal { background: linear-gradient(135deg, #9099a1, #6b7280); }
-.type-fire { background: linear-gradient(135deg, #ff9c54, #f97316); }
-.type-water { background: linear-gradient(135deg, #4d90ff, #3b82f6); }
-.type-electric { background: linear-gradient(135deg, #f4d23c, #eab308); color: #1a1a1a; }
-.type-grass { background: linear-gradient(135deg, #63bc5a, #22c55e); }
-.type-ice { background: linear-gradient(135deg, #73cec0, #14b8a6); color: #1a1a1a; }
-.type-fighting { background: linear-gradient(135deg, #ce416b, #ef4444); }
-.type-poison { background: linear-gradient(135deg, #aa6bc8, #a855f7); }
-.type-ground { background: linear-gradient(135deg, #d97845, #ea580c); }
-.type-flying { background: linear-gradient(135deg, #93a2e0, #8b5cf6); }
-.type-psychic { background: linear-gradient(135deg, #ff6b76, #f43f5e); }
-.type-bug { background: linear-gradient(135deg, #91c12f, #84cc16); }
-.type-rock { background: linear-gradient(135deg, #c5b059, #eab308); }
-.type-ghost { background: linear-gradient(135deg, #5269ad, #6366f1); }
-.type-dragon { background: linear-gradient(135deg, #0b6dc3, #3b82f6); }
-.type-dark { background: linear-gradient(135deg, #5a5366, #6b7280); }
-.type-steel { background: linear-gradient(135deg, #5a8ea2, #64748b); }
-.type-fairy { background: linear-gradient(135deg, #ec8fe6, #d946ef); color: #1a1a1a; }
 
 /* ============================================
    Pagination
@@ -442,6 +552,250 @@
 }
 
 /* ============================================
+   Type Colors
+   ============================================ */
+.type-normal { background: linear-gradient(135deg, #9099a1, #6b7280); }
+.type-fire { background: linear-gradient(135deg, #ff9c54, #f97316); }
+.type-water { background: linear-gradient(135deg, #4d90ff, #3b82f6); }
+.type-electric { background: linear-gradient(135deg, #f4d23c, #eab308); color: #1a1a1a; }
+.type-grass { background: linear-gradient(135deg, #63bc5a, #22c55e); }
+.type-ice { background: linear-gradient(135deg, #73cec0, #14b8a6); color: #1a1a1a; }
+.type-fighting { background: linear-gradient(135deg, #ce416b, #ef4444); }
+.type-poison { background: linear-gradient(135deg, #aa6bc8, #a855f7); }
+.type-ground { background: linear-gradient(135deg, #d97845, #ea580c); }
+.type-flying { background: linear-gradient(135deg, #93a2e0, #8b5cf6); }
+.type-psychic { background: linear-gradient(135deg, #ff6b76, #f43f5e); }
+.type-bug { background: linear-gradient(135deg, #91c12f, #84cc16); }
+.type-rock { background: linear-gradient(135deg, #c5b059, #eab308); }
+.type-ghost { background: linear-gradient(135deg, #5269ad, #6366f1); }
+.type-dragon { background: linear-gradient(135deg, #0b6dc3, #3b82f6); }
+.type-dark { background: linear-gradient(135deg, #5a5366, #6b7280); }
+.type-steel { background: linear-gradient(135deg, #5a8ea2, #64748b); }
+.type-fairy { background: linear-gradient(135deg, #ec8fe6, #d946ef); color: #1a1a1a; }
+
+/* ============================================
+   Add to Team Modal
+   ============================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 28px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+  }
+  
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: rgba(239, 68, 68, 0.8);
+      transform: scale(1.05);
+    }
+  }
+}
+
+.modal-content {
+  padding: 24px;
+  
+  .selected-info {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+    
+    .selected-count {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #00f5ff;
+    }
+    
+    .selected-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary, #a0a0a0);
+    }
+    
+    .warning-text {
+      font-size: 0.7rem;
+      color: #f59e0b;
+    }
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--text-secondary, #a0a0a0);
+      text-transform: uppercase;
+    }
+  }
+  
+  .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-secondary, #0f0f0f);
+    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: var(--text-primary, white);
+    cursor: pointer;
+    
+    &:focus {
+      outline: none;
+      border-color: #00f5ff;
+    }
+    
+    option {
+      background: var(--bg-secondary, #1a1a1a);
+      color: var(--text-primary, white);
+    }
+  }
+  
+  .error-message {
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+  
+  .success-message {
+    padding: 10px 14px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    color: #10b981;
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+  
+  .warning-note {
+    padding: 10px 14px;
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    color: var(--text-secondary, #a0a0a0);
+    
+    span {
+      font-weight: 700;
+      color: #f59e0b;
+    }
+  }
+}
+
+.modal-footer {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  background: var(--bg-secondary, #0f0f0f);
+  
+  .cancel-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #a0a0a0);
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+    }
+  }
+  
+  .confirm-btn {
+    flex: 1;
+    padding: 10px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
    Responsive Design
    ============================================ */
 @media (max-width: 900px) {
@@ -467,6 +821,10 @@
     }
   }
   
+  .bulk-actions-compact {
+    justify-content: center;
+  }
+  
   .range-item {
     justify-content: space-between;
     flex-wrap: wrap;
@@ -474,6 +832,34 @@
     .range-controls {
       flex: 2;
     }
+  }
+  
+  .pokedex-table {
+    font-size: 0.75rem;
+    
+    th, td {
+      padding: 10px 6px;
+    }
+  }
+  
+  .pokemon-sprite {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .type-badge {
+    padding: 2px 8px;
+    font-size: 0.6rem;
+  }
+  
+  .stat-cell {
+    font-size: 0.7rem;
+  }
+  
+  .total-stat {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    min-width: 50px;
   }
 }
 
@@ -509,15 +895,20 @@
       background: #4f46e5;
       box-shadow: 0 0 6px #4f46e5;
     }
+  }
+  
+  .checkbox-label {
+    background: #ffffff;
+    border-color: #d0d0d0;
     
-    &::-moz-range-track {
-      background: rgba(0, 0, 0, 0.1);
+    &:hover {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
     }
-    
-    &::-moz-range-thumb {
-      background: #4f46e5;
-      box-shadow: 0 0 6px #4f46e5;
-    }
+  }
+  
+  .pokemon-checkbox:checked + .checkbox-label {
+    background: linear-gradient(135deg, #667eea, #764ba2);
   }
   
   .pokedex-table thead {
@@ -532,6 +923,38 @@
   .pokemon-name { color: #4f46e5; }
   .pagination { background: #f0f0f0; }
   .page-info { background: #e0e0e0; color: #333; }
+  
+  .modal-container {
+    background: #ffffff;
+  }
+  
+  .form-select {
+    background: #f8f9fa;
+    color: #1a1a1a;
+    
+    option {
+      background: white;
+      color: #1a1a1a;
+    }
+  }
+  
+  .modal-footer {
+    background: #f8f9fa;
+  }
+  
+  .cancel-btn {
+    border-color: #d0d0d0;
+    color: #666;
+  }
+  
+  .compact-add-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+  
+  .compact-clear-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
   
   @media (max-width: 900px) {
     .filter-item {
