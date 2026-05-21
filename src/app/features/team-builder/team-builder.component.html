@@ -329,7 +329,7 @@
   </div>
 }
 
-<!-- Team Pokémon Modal -->
+<!-- Team Pokémon Modal with Detailed Information - 2x3 Grid Layout -->
 @if (showTeamPokemonModal() && selectedTeam()) {
   <div class="team-pokemon-modal-overlay" (click)="closeTeamPokemonModal()">
     <div class="team-pokemon-modal" (click)="$event.stopPropagation()">
@@ -343,19 +343,24 @@
       
       <div class="team-pokemon-modal-content">
         <div class="pokemon-count-badge">
-          {{ getTeamPokemonDetails(selectedTeam()!).length }} Pokémon
+          {{ getTeamPokemonDetails(selectedTeam()!).length }} / 6 Pokémon
         </div>
-        <div class="pokemon-grid">
+        <div class="pokemon-grid-2x3">
           @for (item of getTeamPokemonDetails(selectedTeam()!); track item.id) {
             <div class="pokemon-card">
-              <img [src]="getPokemonSprite(item.id)" [alt]="item.pokemon?.name" class="pokemon-image">
-              <span class="pokemon-name">{{ item.pokemon?.name }}</span>
-              @if (item.nickname) {
-                <span class="pokemon-nickname-badge">"{{ item.nickname }}"</span>
-              }
-              @if (item.heldItem) {
-                <span class="pokemon-helditem-badge">{{ getHeldItemLabel(item.heldItem) }}</span>
-              }
+              <div class="pokemon-image-wrapper">
+                <img [src]="getPokemonSprite(item.id)" [alt]="item.pokemon?.name" class="pokemon-image">
+                <div class="pokemon-order-badge">{{ $index + 1 }}</div>
+              </div>
+              <div class="pokemon-info-container">
+                <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+                @if (item.nickname) {
+                  <span class="pokemon-nickname-badge">✨ "{{ item.nickname }}"</span>
+                }
+                @if (item.heldItem) {
+                  <span class="pokemon-helditem-badge">🎒 {{ getHeldItemLabel(item.heldItem) }}</span>
+                }
+              </div>
             </div>
           } @empty {
             <div class="no-pokemon">

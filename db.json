@@ -121,6 +121,36 @@
       "created_at": "2024-03-20T14:30:00Z",
       "competitive_mode": true,
       "tier": "OU"
+    },
+    {
+      "name": "MyTeam",
+      "trainer_id": "1",
+      "pokemon_ids": [
+        1,
+        2,
+        3
+      ],
+      "pokemon_details": [
+        {
+          "pokemonId": 1,
+          "nickname": "mmm",
+          "heldItem": "toxic_orb"
+        },
+        {
+          "pokemonId": 2,
+          "nickname": "ooo",
+          "heldItem": "air_balloon"
+        },
+        {
+          "pokemonId": 3,
+          "nickname": "ppp",
+          "heldItem": "air_balloon"
+        }
+      ],
+      "created_at": "2026-05-21T01:41:53.060Z",
+      "competitive_mode": false,
+      "tier": null,
+      "id": "BvtcDwyluzI"
     }
   ],
   "battles": [
