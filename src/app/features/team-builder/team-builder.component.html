@@ -78,53 +78,7 @@
           </div>
         }
         
-        <!-- Pokémon Search Autocomplete -->
-        <div class="form-group">
-          <label>Add Pokémon ({{ selectedPokemonIds().length }}/6) *</label>
-          <div class="search-container" (click)="$event.stopPropagation()">
-            <input 
-              #searchInput
-              type="text" 
-              [ngModel]="searchTerm()"
-              (ngModelChange)="searchTerm.set($event); onSearchChange()"
-              (focus)="onSearchFocus()"
-              placeholder="Search Pokémon by name"
-              class="search-input"
-              [disabled]="selectedPokemonIds().length >= 6" />
-            
-            <!-- Dropdown Results -->
-            @if (showDropdown() && searchResults().length > 0) {
-              <div class="search-dropdown">
-                <div class="search-dropdown-scroll">
-                  @for (pokemon of searchResults(); track pokemon.id) {
-                    <div class="search-item" (click)="addPokemon(pokemon)">
-                      <img [src]="pokemon.sprites.front_default" width="45" height="45" />
-                      <div class="search-item-info">
-                        <strong>{{ pokemon.name }}</strong>
-                        <div class="type-badges">
-                          @for (type of pokemon.types; track type) {
-                            <span class="type-badge-small" [class]="'type-' + type.toLowerCase()">
-                              {{ type }}
-                            </span>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-            
-            <!-- Empty Search Result -->
-            @if (showDropdown() && searchTerm().length >= 2 && searchResults().length === 0) {
-              <div class="search-dropdown">
-                <div class="search-empty">
-                  No Pokémon found matching "{{ searchTerm() }}"
-                </div>
-              </div>
-            }
-          </div>
-        </div>
+       
 
         <!-- Pokémon Sub-forms (Nickname & Held Item) -->
         @if (selectedPokemonWithDetails().length > 0) {
@@ -172,13 +126,61 @@
         }
 
         <!-- Type Coverage Warning Banner -->
-        @if (typeCoverageWarning().show) {
+        <!-- @if (typeCoverageWarning().show) {
           <div class="warning-banner">
             <span class="warning-icon">⚠️</span>
             <span class="warning-text">{{ typeCoverageWarning().message }}</span>
           </div>
-        }
+        } -->
 
+         <!-- Pokémon Search Autocomplete -->
+        <div class="form-group">
+          <label>Add Pokémon ({{ selectedPokemonIds().length }}/6) *</label>
+          <div class="search-container" (click)="$event.stopPropagation()">
+            <input 
+              #searchInput
+              type="text" 
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event); onSearchChange()"
+              (focus)="onSearchFocus()"
+              placeholder="Search Pokémon by name"
+              class="search-input"
+              [disabled]="selectedPokemonIds().length >= 6" />
+            
+            <!-- Dropdown Results -->
+            @if (showDropdown() && searchResults().length > 0) {
+              <div class="search-dropdown">
+                <div class="search-dropdown-scroll">
+                  @for (pokemon of searchResults(); track pokemon.id) {
+                    <div class="search-item" (click)="addPokemon(pokemon)">
+                      <img [src]="pokemon.sprites.front_default" width="45" height="45" />
+                      <div class="search-item-info">
+                        <strong>{{ pokemon.name }}</strong>
+                        <div class="type-badges">
+                          @for (type of pokemon.types; track type) {
+                            <span class="type-badge-small" [class]="'type-' + type.toLowerCase()">
+                              {{ type }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+            
+            <!-- Empty Search Result -->
+            @if (showDropdown() && searchTerm().length >= 2 && searchResults().length === 0) {
+              <div class="search-dropdown">
+                <div class="search-empty">
+                  No Pokémon found matching "{{ searchTerm() }}"
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        
         <!-- Competitive Mode Toggle -->
         <div class="checkbox-wrapper">
           <label class="checkbox-label">

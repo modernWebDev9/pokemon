@@ -478,21 +478,23 @@ export class TeamBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Updates team
-   */
-  updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): void {
-    this.trainerStore.updateTeam(id, updates).subscribe({
-      next: () => {
-        this.showEditDialog.set(false);
-        this.editingTeam.set(null);
-      },
-      error: (err: any) => {
-        console.error('Update failed:', err);
-        this.error.set(err.message || 'Failed to update team');
-        setTimeout(() => this.error.set(null), 3000);
-      }
-    });
-  }
+ * Updates team with optimistic UI updates
+ */
+updateTeam(id: string, updates: Partial<Omit<Team, 'id' | 'createdAt' | 'trainerId'>>): void {
+  console.log('Updating team:', id, updates);
+  this.trainerStore.updateTeam(id, updates).subscribe({
+    next: () => {
+      console.log('Team updated successfully');
+      this.showEditDialog.set(false);
+      this.editingTeam.set(null);
+    },
+    error: (err: any) => {
+      console.error('Update failed:', err);
+      this.error.set(err.message || 'Failed to update team');
+      setTimeout(() => this.error.set(null), 3000);
+    }
+  });
+}
 
   /**
    * Opens delete confirmation modal

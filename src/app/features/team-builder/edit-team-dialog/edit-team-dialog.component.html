@@ -14,7 +14,8 @@
         <input 
           id="editTeamName"
           type="text" 
-          [(ngModel)]="editName"
+          [ngModel]="editName()"
+          (ngModelChange)="editName.set($event)"
           placeholder="Enter team name (3-30 characters)"
           class="form-input" />
         @if (editName().length > 0 && (editName().length < 3 || editName().length > 30)) {
@@ -24,13 +25,57 @@
         }
       </div>
       
-      <!-- Competitive Mode Toggle -->
+      <!-- Pokémon Details Section -->
+      @if (selectedPokemonWithDetails().length > 0) {
+        <div class="pokemon-edit-section">
+          <label>Pokémon Details</label>
+          <div class="pokemon-edit-list">
+            @for (item of selectedPokemonWithDetails(); track item.id) {
+              <div class="pokemon-edit-card">
+                <div class="pokemon-edit-header">
+                  <img [src]="getPokemonSprite(item.id)" width="40" height="40" />
+                  <div class="pokemon-edit-info">
+                    <span class="pokemon-name">{{ item.pokemon?.name }}</span>
+                    @if (item.nickname) {
+                      <span class="pokemon-nickname">({{ item.nickname }})</span>
+                    }
+                  </div>
+                </div>
+                <div class="pokemon-edit-fields">
+                  <div class="field-group">
+                    <label>Nickname (optional)</label>
+                    <input 
+                      type="text" 
+                      [ngModel]="getPokemonNickname(item.id)"
+                      (ngModelChange)="updateNickname(item.id, $event)"
+                      placeholder="Enter a nickname"
+                      class="subform-input" />
+                  </div>
+                  <div class="field-group">
+                    <label>Held Item</label>
+                    <select 
+                      [ngModel]="getPokemonHeldItem(item.id)"
+                      (ngModelChange)="updateHeldItem(item.id, $event)"
+                      class="subform-select">
+                      @for (heldItem of heldItems(); track heldItem.value) {
+                        <option [value]="heldItem.value">{{ heldItem.label }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      
+      <!-- Competitive Mode Toggle - Simple checkbox that directly controls the signal -->
       <div class="checkbox-wrapper">
         <label class="checkbox-label">
           <input 
             type="checkbox" 
-            [(ngModel)]="editCompetitiveMode"
-            (ngModelChange)="onCompetitiveModeChange($event)" />
+            [ngModel]="editCompetitiveMode()"
+            (ngModelChange)="editCompetitiveMode.set($event)" />
           <span class="checkbox-text">
             Competitive Mode
             <span class="checkbox-description">(EV Training)</span>
@@ -38,7 +83,7 @@
         </label>
       </div>
       
-      <!-- Tier Selection (conditional) -->
+      <!-- Tier Selection - Shows ONLY when editCompetitiveMode is true -->
       @if (editCompetitiveMode()) {
         <div class="ev-section">
           <div class="ev-header">
@@ -51,8 +96,10 @@
             <div class="select-wrapper">
               <select 
                 id="editTierSelect"
-                [(ngModel)]="editTier" 
+                [ngModel]="editTier()" 
+                (ngModelChange)="editTier.set($event)" 
                 class="form-input ev-select">
+                <option [ngValue]="null">Select a tier</option>
                 <option value="OU">OU (OverUsed) — Standard competitive</option>
                 <option value="UU">UU (UnderUsed) — Slightly restricted</option>
                 <option value="RU">RU (RarelyUsed) — Moderate restrictions</option>
