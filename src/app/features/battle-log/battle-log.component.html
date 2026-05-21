@@ -268,7 +268,7 @@
   </div>
 }
 
-<!-- Team Pokémon Modal with Detailed Information -->
+<!-- Team Pokémon Modal with Detailed Information - 2x3 Grid Layout -->
 @if (showTeamPokemonModal() && selectedTeam()) {
   <div class="team-pokemon-modal-overlay" (click)="closeTeamPokemonModal()">
     <div class="team-pokemon-modal" (click)="$event.stopPropagation()">
@@ -282,12 +282,15 @@
       
       <div class="team-pokemon-modal-content">
         <div class="pokemon-count-badge">
-          {{ selectedTeam()!.pokemonDetailsList.length }} Pokémon
+          {{ selectedTeam()!.pokemonDetailsList.length }} / 6 Pokémon
         </div>
-        <div class="pokemon-grid">
+        <div class="pokemon-grid-2x3">
           @for (item of selectedTeam()!.pokemonDetailsList; track item.pokemon.id) {
             <div class="pokemon-card">
-              <img [src]="getPokemonSprite(item.pokemon.id)" [alt]="item.pokemon.name" class="pokemon-image">
+              <div class="pokemon-image-wrapper">
+                <img [src]="getPokemonSprite(item.pokemon.id)" [alt]="item.pokemon.name" class="pokemon-image">
+                <div class="pokemon-order-badge">{{ $index + 1 }}</div>
+              </div>
               <div class="pokemon-info-container">
                 <span class="pokemon-name">{{ item.pokemon.name }}</span>
                 @if (item.nickname) {
